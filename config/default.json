@@ -1,0 +1,11 @@
+{
+  "appEnv": "stage",
+  "launchDarkly": {
+    "apiKey": "your-secret-key",
+    "environment": "test",
+    "rest": {
+      "baseUrl": "https://app.launchdarkly.com/api/v2",
+      "flags": "/flags/default"
+    }
+  }
+}

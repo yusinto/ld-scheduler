@@ -1,32 +1,28 @@
 import moment from 'moment';
+import config from 'config';
 
 const updateList = [
   {
     flag: 'dev-test-flag',
     value: true,
-    deploymentDateTime: '2017-02-24 22:27',
-    isDeployed: false,
+    from: '2017-02-24 23:00',
+    to: '2017-02-24 23:02', // TODO: update flag after we passed the 'to' date
+    isDeployed: false, // TODO: retrieve flag value from launch darkly to ascertain its value so we don't need this property
   },
 ];
-const apiKey = 'your-api-key';
-const project = 'default';
-const environment = 'test';
-const baseUrl = `https://app.launchdarkly.com/api/v2/flags/${project}`;
 const headers = {
   Accept: '*/*',
   'Content-Type': 'application/json',
-  Authorization: apiKey,
+  Authorization: config.launchDarkly.apiKey,
   'accept-encoding': 'gzip, deflate'
 };
 
 // set said flag to the specified value
 const run = () => {
   console.log(`${moment().format('YYYY-MM-DD HH:mm:ss')} lds is waking up...`);
+  const undeployedFlags = updateList.filter(f => !f.isDeployed && moment().isAfter(moment(f.from, 'YYYY-MM-DD HH:mm')));
 
-  // process un-deployed items only
-  const undeployedFlags = updateList.filter(f => !f.isDeployed && moment().isAfter(moment(f.deploymentDateTime, 'YYYY-MM-DD HH:mm')));
-
-  if(undeployedFlags.length === 0) {
+  if (undeployedFlags.length === 0) {
     console.log('Nothing to process, going back to sleep');
     return;
   }
@@ -38,11 +34,11 @@ const run = () => {
     // GOTCHA: Must stringify body!!!!
     const body = JSON.stringify([{
       op: 'replace',
-      path: `/environments/${environment}/on`,
+      path: `/environments/${config.launchDarkly.environment}/on`,
       value,
     }]);
 
-    const url = `${baseUrl}/${flag}`;
+    const url = `${config.launchDarkly.rest.baseUrl}${config.launchDarkly.rest.flags}/${flag}`;
     const response = await fetch(url, {
       method: 'PATCH',
       headers,

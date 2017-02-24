@@ -1,0 +1,7 @@
+{
+  "appEnv": "production",
+  "launchDarkly": {
+    "apiKey": "your-api-key",
+    "environment": "production"
+  }
+}

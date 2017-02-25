@@ -1,11 +1,12 @@
 {
-  "appEnv": "stage",
+  "appEnv": "development",
   "launchDarkly": {
-    "apiKey": "your-secret-key",
+    "apiKey": "your-secret-api-key",
     "environment": "test",
     "rest": {
       "baseUrl": "https://app.launchdarkly.com/api/v2",
       "flags": "/flags/default"
     }
-  }
+  },
+  "slack": "your-slack-incoming-webhook"
 }

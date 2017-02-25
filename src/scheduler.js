@@ -1,15 +1,39 @@
 import moment from 'moment';
 import config from 'config';
+import upperFirst from 'lodash/upperFirst';
+
+const TASK_TYPES = {
+  killSwitch: 'Sets kill switch to true or false',
+  fallThroughRollout: 'Sets default rule percentage rollout',
+};
 
 const scheduledTasks = [
   {
+    flag: 'new-and-old-funnel',
+    taskType: TASK_TYPES.fallThroughRollout,
+    value: [
+      {
+        variation: 0, // true
+        weight: 100000, // not sure why this is in the thousands..
+      },
+      {
+        variation: 1, // false
+        weight: 0,
+      }
+    ],
+    targetDeploymentDateTime: '2017-02-27 12:01',
+    isDeployed: false,
+  },
+  {
     flag: 'double-points-code',
+    taskType: TASK_TYPES.killSwitch,
     value: true,
     targetDeploymentDateTime: '2017-02-27 12:01',
     isDeployed: false,
   },
   {
     flag: 'marketing-campaign-home-page',
+    taskType: TASK_TYPES.killSwitch,
     value: true,
     targetDeploymentDateTime: '2017-02-27 12:01',
     isDeployed: false,
@@ -32,14 +56,28 @@ const run = () => {
     return;
   }
 
-  outstandingTasks.forEach(async(f) => {
-    const {flag, value} = f;
-    console.log(`Processing ${JSON.stringify(f)}`);
+  outstandingTasks.forEach(async(task) => {
+    const {taskType, flag, value} = task;
+    console.log(`Processing ${JSON.stringify(task)}`);
+
+    let path = `/environments/${config.launchDarkly.environment}`;
+
+    switch (taskType) {
+      case TASK_TYPES.killSwitch:
+        path += '/on';
+        break;
+      case TASK_TYPES.fallThroughRollout:
+        path += '/fallthrough/rollout/variations';
+        break;
+      default:
+        console.log(`ERROR: Unknown task type: ${taskType}`);
+        return;
+    }
 
     // GOTCHA: Must stringify body!!!!
     const body = JSON.stringify([{
       op: 'replace',
-      path: `/environments/${config.launchDarkly.environment}/on`,
+      path,
       value,
     }]);
 
@@ -55,28 +93,43 @@ const run = () => {
       console.log(`LaunchDarkly api response: ${response.status} ${response.statusText} from: ${response.url}`);
 
       if (response.status === 200) {
-        f.isDeployed = true;
+        task.isDeployed = true;
         console.log(`SUCCESS LD api! Updated ${flag} to ${value}.`);
-        messageSlack({isUpdateSuccessful: true, flag, value});
+        messageSlack({isUpdateSuccessful: true, task});
       } else {
         console.log(`LaunchDarkly threw an error. Did not update ${flag}. Will retry again later.`);
-        messageSlack({isUpdateSuccessful: false, flag, value});
+        messageSlack({isUpdateSuccessful: false, task});
       }
     } catch (e) {
       console.log(`Network error. Could not reach LaunchDarkly. Did not update ${flag}. Will retry again later. ${e}`);
-      messageSlack({isUpdateSuccessful: false, flag, value});
+      messageSlack({isUpdateSuccessful: false, task});
     }
   });
 };
 
-const messageSlack = async ({isUpdateSuccessful, flag, value}) => {
-  let message;
-  const onOff = value ? 'on' : 'off';
+const messageSlack = async({isUpdateSuccessful, task: {taskType, flag, value}}) => {
+  let message = `[${upperFirst(config.launchDarkly.environment)}] `;
 
-  if (isUpdateSuccessful) {
-    message = `Successfully switched ${onOff} ${flag}.`;
-  } else {
-    message = `FAILED to switch ${onOff} ${flag}. Will retry in a few minutes.`;
+  switch (taskType) {
+    case TASK_TYPES.killSwitch:
+      const onOff = value ? 'on' : 'off';
+      message += isUpdateSuccessful ?
+        `Successfully switched ${onOff} ${flag}.`
+        :
+        `FAILED to switch ${onOff} ${flag}. Will retry in a few minutes.`;
+      break;
+
+    case TASK_TYPES.fallThroughRollout:
+      const rolloutPercentages = `{true: ${value[0].weight / 1000}%, false: ${value[1].weight / 1000}%}`;
+      message += isUpdateSuccessful ?
+        `Successfully set rollout percentage to ${rolloutPercentages} for ${flag}.`
+        :
+        `FAILED to set rollout percentage for ${flag}. Will retry in a few minutes.`;
+      break;
+
+    default:
+      console.log(`ERROR: Unknown task type: ${taskType}`);
+      return;
   }
 
   const body = JSON.stringify({

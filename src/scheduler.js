@@ -2,6 +2,7 @@ import moment from 'moment';
 import config from 'config';
 import upperFirst from 'lodash/upperFirst';
 
+const POLL_INTERVAL_SECONDS = 60; // 1 minute
 const TASK_TYPES = {
   killSwitch: 'Sets kill switch to true or false',
   fallThroughRollout: 'Sets default rule percentage rollout',
@@ -21,21 +22,21 @@ const scheduledTasks = [
         weight: 0,
       }
     ],
-    targetDeploymentDateTime: '2017-02-27 12:01',
+    targetDeploymentDateTime: '2017-02-27 00:01',
     isDeployed: false,
   },
   {
     flag: 'double-points-code',
     taskType: TASK_TYPES.killSwitch,
     value: true,
-    targetDeploymentDateTime: '2017-02-27 12:01',
+    targetDeploymentDateTime: '2017-02-27 00:01',
     isDeployed: false,
   },
   {
     flag: 'marketing-campaign-home-page',
     taskType: TASK_TYPES.killSwitch,
     value: true,
-    targetDeploymentDateTime: '2017-02-27 12:01',
+    targetDeploymentDateTime: '2017-02-27 00:01',
     isDeployed: false,
   }
 ];
@@ -166,4 +167,4 @@ const messageSlack = async({isUpdateSuccessful, task: {taskType, flag, value}}) 
 // listFlags();
 setInterval(() => {
   run();
-}, 3000);
+}, POLL_INTERVAL_SECONDS * 1000);

@@ -4,6 +4,35 @@ import upperFirst from 'lodash/upperFirst';
 import without from 'lodash/without';
 import keyMirror from 'keymirror';
 
+
+/*
+To use this scheduler, you'll need to add a tag to your feature flag called "scheduled" and then add a json object
+to the description field of that flag. That json object should look like this:
+ {
+    "taskType": "killSwitch",
+    "value": true,
+    "targetDeploymentDateTime": "2017-02-27 22:00",
+    "description": "Test flag for dev"
+ }
+
+where:
+  taskType can be one of killSwitch or fallThroughRollout
+  value can be:
+    true or false if taskType is killSwitch OR
+    a json object of this shape if taskType is fallThroughRollout:
+    [
+       {
+          variation: 0, // true
+          weight: 100000,
+       },
+       {
+          variation: 1, // false
+          weight: 0,
+       }
+   ]
+ targetDeploymentDateTime must be in the format of YYYY-MM-DD HH:mm
+ description is a textual description of the purpose of the flag for human readability
+*/
 const POLL_INTERVAL_SECONDS = 60; // 1 minute
 export const TASK_TYPES = keyMirror({
   killSwitch: null,

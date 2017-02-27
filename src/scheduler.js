@@ -1,45 +1,14 @@
 import moment from 'moment';
 import config from 'config';
 import upperFirst from 'lodash/upperFirst';
+import without from 'lodash/without';
+import keyMirror from 'keymirror';
 
 const POLL_INTERVAL_SECONDS = 60; // 1 minute
-const TASK_TYPES = {
-  killSwitch: 'Sets kill switch to true or false',
-  fallThroughRollout: 'Sets default rule percentage rollout',
-};
-
-const scheduledTasks = [
-  {
-    flag: 'new-and-old-funnel',
-    taskType: TASK_TYPES.fallThroughRollout,
-    value: [
-      {
-        variation: 0, // true
-        weight: 100000, // not sure why this is in the thousands..
-      },
-      {
-        variation: 1, // false
-        weight: 0,
-      }
-    ],
-    targetDeploymentDateTime: '2017-02-27 00:01',
-    isDeployed: false,
-  },
-  {
-    flag: 'double-points-code',
-    taskType: TASK_TYPES.killSwitch,
-    value: true,
-    targetDeploymentDateTime: '2017-02-27 00:01',
-    isDeployed: false,
-  },
-  {
-    flag: 'marketing-campaign-home-page',
-    taskType: TASK_TYPES.killSwitch,
-    value: true,
-    targetDeploymentDateTime: '2017-02-27 00:01',
-    isDeployed: false,
-  }
-];
+export const TASK_TYPES = keyMirror({
+  killSwitch: null,
+  fallThroughRollout: null,
+});
 const headers = {
   Accept: '*/*',
   'Content-Type': 'application/json',
@@ -47,19 +16,55 @@ const headers = {
   'accept-encoding': 'gzip, deflate'
 };
 
-// set said flag to the specified value
-const run = () => {
-  console.log(`${moment().format('YYYY-MM-DD HH:mm:ss')} ld-scheduler is waking up with appEnv: ${config.appEnv}, ld.environment: ${config.launchDarkly.environment}`);
-  const outstandingTasks = scheduledTasks.filter(f => !f.isDeployed && moment().isAfter(moment(f.targetDeploymentDateTime, 'YYYY-MM-DD HH:mm')));
+// list all flags in the current project
+const getScheduledFlags = async() => {
+  const url = `${config.launchDarkly.rest.baseUrl}${config.launchDarkly.rest.flags}?env=${config.launchDarkly.environment}&tag=scheduled`;
+  try {
+    const response = await fetch(url, {
+      method: 'GET',
+      headers,
+    });
+
+    const data = await response.json();
+    return data.items;
+  } catch (e) {
+    console.log(`getScheduledFlags: ERROR: ${e}. Will retry again later.`);
+    return [];
+  }
+};
+
+const main = async() => {
+  console.log(`main: ${moment().format('YYYY-MM-DD HH:mm:ss')} ld-scheduler is waking up with appEnv: ${config.appEnv}, ld.environment: ${config.launchDarkly.environment}`);
+  const scheduledFlags = await getScheduledFlags();
+
+  /*
+   HACK: use flag.description field to store scheduled task details in launchDarkly's database in this format:
+   {
+   "taskType": "killSwitch",
+   "value": true,
+   "targetDeploymentDateTime": "2017-02-27 22:00",
+   "description": "Test flag for dev"
+   }
+   */
+  let outstandingTasks = scheduledFlags.filter(f => {
+    const outstandingTask = JSON.parse(f.description);
+    return moment().isAfter(moment(outstandingTask.targetDeploymentDateTime, 'YYYY-MM-DD HH:mm'));
+  }).map(f => {
+    return {
+      key: f.key,
+      tags: f.tags,
+      ...JSON.parse(f.description)
+    }
+  });
 
   if (outstandingTasks.length === 0) {
-    console.log('Nothing to process, going back to sleep');
+    console.log('main: Nothing to process, going back to sleep');
     return;
   }
 
   outstandingTasks.forEach(async(task) => {
-    const {taskType, flag, value} = task;
-    console.log(`Processing ${JSON.stringify(task)}`);
+    const {taskType, key, value} = task;
+    console.log(`main: Processing ${JSON.stringify(task)}`);
 
     let path = `/environments/${config.launchDarkly.environment}`;
 
@@ -71,18 +76,17 @@ const run = () => {
         path += '/fallthrough/rollout/variations';
         break;
       default:
-        console.log(`ERROR: Unknown task type: ${taskType}`);
+        console.log(`main: ERROR: Unknown task type: ${taskType}`);
         return;
     }
 
-    // GOTCHA: Must stringify body!!!!
     const body = JSON.stringify([{
       op: 'replace',
       path,
       value,
     }]);
 
-    const url = `${config.launchDarkly.rest.baseUrl}${config.launchDarkly.rest.flags}/${flag}`;
+    const url = `${config.launchDarkly.rest.baseUrl}${config.launchDarkly.rest.flags}/${key}`;
 
     try {
       const response = await fetch(url, {
@@ -91,45 +95,81 @@ const run = () => {
         body,
       });
 
-      console.log(`LaunchDarkly api response: ${response.status} ${response.statusText} from: ${response.url}`);
+      console.log(`main: LaunchDarkly api response: ${response.status} ${response.statusText} from: ${response.url}`);
 
       if (response.status === 200) {
-        task.isDeployed = true;
-        console.log(`SUCCESS LD api! Updated ${flag} to ${value}.`);
+        completeFlagDeployment(task);
+
+        console.log(`main: SUCCESS LD api! Updated ${key} to ${value}.`);
         messageSlack({isUpdateSuccessful: true, task});
       } else {
-        console.log(`LaunchDarkly threw an error. Did not update ${flag}. Will retry again later.`);
+        console.log(`main: LaunchDarkly threw an error. Did not update ${key}. Will retry again later.`);
         messageSlack({isUpdateSuccessful: false, task});
       }
     } catch (e) {
-      console.log(`Network error. Could not reach LaunchDarkly. Did not update ${flag}. Will retry again later. ${e}`);
+      console.log(`main: Network error. Could not reach LaunchDarkly. Did not update ${key}. Will retry again later. ${e}`);
       messageSlack({isUpdateSuccessful: false, task});
     }
   });
 };
 
-const messageSlack = async({isUpdateSuccessful, task: {taskType, flag, value}}) => {
+const completeFlagDeployment = async({key, tags, description}) => {
+  const body = JSON.stringify([
+    {
+      op: 'replace',
+      path: '/tags',
+      value: without(tags, 'scheduled'),
+    },
+    {
+      op: 'replace',
+      path: '/description',
+      value: description,
+    }
+  ]);
+
+  const url = `${config.launchDarkly.rest.baseUrl}${config.launchDarkly.rest.flags}/${key}`;
+
+  try {
+    const response = await fetch(url, {
+      method: 'PATCH',
+      headers,
+      body,
+    });
+
+    console.log(`completeFlagDeployment: LaunchDarkly api response: ${response.status} ${response.statusText} from: ${response.url}`);
+
+    if (response.status === 200) {
+      console.log(`completeFlagDeployment: SUCCESS LD api! Updated ${key} to ${body}.`);
+    } else {
+      console.log(`completeFlagDeployment: LaunchDarkly threw an error. Did not update ${key}. Will retry again later.`);
+    }
+  } catch (e) {
+    console.log(`completeFlagDeployment: Network error. Could not reach LaunchDarkly. Did not update ${key}. Will retry again later. ${e}`);
+  }
+};
+
+const messageSlack = async({isUpdateSuccessful, task: {taskType, key, value}}) => {
   let message = `[${upperFirst(config.launchDarkly.environment)}] `;
 
   switch (taskType) {
     case TASK_TYPES.killSwitch:
       const onOff = value ? 'on' : 'off';
       message += isUpdateSuccessful ?
-        `Successfully switched ${onOff} ${flag}.`
+        `Successfully switched ${onOff} ${key}.`
         :
-        `FAILED to switch ${onOff} ${flag}. Will retry in a few minutes.`;
+        `FAILED to switch ${onOff} ${key}. Will retry in a few minutes.`;
       break;
 
     case TASK_TYPES.fallThroughRollout:
       const rolloutPercentages = `{true: ${value[0].weight / 1000}%, false: ${value[1].weight / 1000}%}`;
       message += isUpdateSuccessful ?
-        `Successfully set rollout percentage to ${rolloutPercentages} for ${flag}.`
+        `Successfully set rollout percentage to ${rolloutPercentages} for ${key}.`
         :
-        `FAILED to set rollout percentage for ${flag}. Will retry in a few minutes.`;
+        `FAILED to set rollout percentage for ${key}. Will retry in a few minutes.`;
       break;
 
     default:
-      console.log(`ERROR: Unknown task type: ${taskType}`);
+      console.log(`Slack ERROR: Unknown task type: ${taskType}`);
       return;
   }
 
@@ -145,26 +185,15 @@ const messageSlack = async({isUpdateSuccessful, task: {taskType, flag, value}}) 
 
     console.log(`Posted message on slack. Response: ${response.status} ${response.statusText} from: ${response.url}`);
   } catch (e) {
-    console.log(`Network error. Could not reach Slack. Did not post to slack regarding ${isUpdateSuccessful}, ${flag}: ${targetValue}. ${e}`);
+    console.log(`Network error. Could not reach Slack. Did not post to slack regarding ${isUpdateSuccessful}, ${key}: ${targetValue}. ${e}`);
   }
 };
 
-// list all flags in the current project
-// const listFlags = async() => {
-//   console.log('Running listFlags...');
-//
-//   const url = `${baseUrl}?env=${environment}`;
-//   const response = await fetch(url, {
-//     method: 'GET',
-//     headers,
-//   });
-//
-//   // GOTCHA: must use .json() to convert response.body to json!!!
-//   const data = await response.json();
-//   console.log(`response: ${response.status} ${response.statusText} ${JSON.stringify(data)} from: ${response.url}`);
-// };
-
 // listFlags();
+
+console.log(`${moment().format('YYYY-MM-DD HH:mm:ss')} ld-scheduler started with appEnv: ${config.appEnv}, ld.environment: ${config.launchDarkly.environment}`);
+main();
+
 setInterval(() => {
-  run();
+  main();
 }, POLL_INTERVAL_SECONDS * 1000);

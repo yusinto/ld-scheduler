@@ -37,6 +37,7 @@
     "bluebird": "^3.4.7",
     "config": "^1.25.1",
     "isomorphic-fetch": "^2.2.1",
+    "keymirror": "^0.1.1",
     "lodash": "^4.17.4",
     "moment": "^2.17.1"
   }

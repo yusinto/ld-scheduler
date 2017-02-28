@@ -14,7 +14,7 @@ export default async() => {
       const data = await response.json();
       return data.items;
     }
-    
+
     console.log(`getScheduledFlag ERROR: api response: ${response.status} ${response.statusText} from: ${response.url}`);
     return [];
   } catch (e) {

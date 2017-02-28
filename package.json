@@ -5,8 +5,12 @@
   "main": "index.js",
   "scripts": {
     "start": "node ./src/index.js",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "jest --watchAll",
     "lint": "eslint --cache --format 'node_modules/eslint-friendly-formatter' ./src"
+  },
+  "jest": {
+    "verbose": true,
+    "setupFiles": ["<rootDir>/test/setup.js"]
   },
   "repository": {
     "type": "git",
@@ -50,6 +54,8 @@
     "eslint-plugin-babel": "^4.1.0",
     "eslint-plugin-import": "^2.2.0",
     "eslint-plugin-jsx-a11y": "^4.0.0",
-    "eslint-plugin-react": "^6.10.0"
+    "eslint-plugin-react": "^6.10.0",
+    "jest": "^19.0.2",
+    "testdouble": "^1.11.1"
   }
 }

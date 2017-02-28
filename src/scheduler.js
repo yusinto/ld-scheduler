@@ -1,34 +1,35 @@
 import moment from 'moment';
 import config from 'config';
-import {requestHeaders, taskTypes} from 'constants';
-import getScheduledFlags from 'getScheduledFlags';
-import completeFlagDeployment from 'completeFlagDeployment';
-import slack from 'slack';
+import {requestHeaders, taskTypes} from './constants';
+import getScheduledFlags from './getScheduledFlags';
+import completeFlagDeployment from './completeFlagDeployment';
+import slack from './slack';
 
 /*
  To use this scheduler, you'll need to add a tag to your feature flag called "scheduled" and then add a json object
  to the description field of that flag. That json object should look like this:
  {
- "taskType": "killSwitch",
- "value": true,
- "targetDeploymentDateTime": "2017-02-27 22:00",
- "description": "Test flag for dev"
+   "taskType": "killSwitch",
+   "value": true,
+   "targetDeploymentDateTime": "2017-02-27 22:00",
+   "description": "Test flag for dev"
  }
 
  where:
- taskType can be one of killSwitch or fallThroughRollout
+ taskType can be:
+  killSwitch OR fallThroughRollout
  value can be:
- true or false if taskType is killSwitch OR
- a json object of this shape if taskType is fallThroughRollout:
+  true or false if taskType is killSwitch OR
+  a json object of this shape if taskType is fallThroughRollout:
  [
- {
- variation: 0, // true
- weight: 100000,
- },
- {
- variation: 1, // false
- weight: 0,
- }
+   {
+     variation: 0, // true
+     weight: 100000,
+   },
+   {
+     variation: 1, // false
+     weight: 0,
+   }
  ]
  targetDeploymentDateTime must be in the format of YYYY-MM-DD HH:mm
  description is a textual description of the purpose of the flag for human readability
@@ -40,16 +41,14 @@ const main = async() => {
   const scheduledFlags = await getScheduledFlags();
 
   // get only flags that can bedeployed
-  let outstandingTasks = scheduledFlags.filter(f => {
+  const outstandingTasks = scheduledFlags.filter(f => {
     const outstandingTask = JSON.parse(f.description);
     return moment().isAfter(moment(outstandingTask.targetDeploymentDateTime, 'YYYY-MM-DD HH:mm'));
-  }).map(f => {
-    return {
-      key: f.key,
-      tags: f.tags,
-      ...JSON.parse(f.description)
-    }
-  });
+  }).map(f => ({
+    key: f.key,
+    tags: f.tags,
+    ...JSON.parse(f.description)
+  }));
 
   if (outstandingTasks.length === 0) {
     console.log('main: Nothing to process, going back to sleep');

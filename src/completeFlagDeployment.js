@@ -1,8 +1,8 @@
 import config from 'config';
-import {requestHeaders} from 'constants';
+import {requestHeaders} from './constants';
 import without from 'lodash/without';
 
-export default completeFlagDeployment = async ({key, tags, description}) => {
+export default async({key, tags, description}) => {
   const body = JSON.stringify([
     {
       op: 'replace',

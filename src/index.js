@@ -1,5 +1,5 @@
 require('babel-register');
-require("babel-polyfill");
+require('babel-polyfill');
 
 const blueBird = require('bluebird');
 global.Promise = blueBird;

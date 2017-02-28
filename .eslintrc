@@ -5,6 +5,11 @@
     "babel"
   ],
   "rules": {
+    "import/first": 0,
+    "import/newline-after-import": 0,
+    "import/extensions": 0,
+    "arrow-parens": 0,
+    "space-before-function-paren": 0,
     "comma-dangle": 0,
     "eol-last": 0,
     "global-require": 0,

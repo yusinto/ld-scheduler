@@ -1,80 +1,45 @@
 import moment from 'moment';
 import config from 'config';
-import upperFirst from 'lodash/upperFirst';
-import without from 'lodash/without';
-import keyMirror from 'keymirror';
-
+import {requestHeaders, taskTypes} from 'constants';
+import getScheduledFlags from 'getScheduledFlags';
+import completeFlagDeployment from 'completeFlagDeployment';
+import slack from 'slack';
 
 /*
-To use this scheduler, you'll need to add a tag to your feature flag called "scheduled" and then add a json object
-to the description field of that flag. That json object should look like this:
+ To use this scheduler, you'll need to add a tag to your feature flag called "scheduled" and then add a json object
+ to the description field of that flag. That json object should look like this:
  {
-    "taskType": "killSwitch",
-    "value": true,
-    "targetDeploymentDateTime": "2017-02-27 22:00",
-    "description": "Test flag for dev"
+ "taskType": "killSwitch",
+ "value": true,
+ "targetDeploymentDateTime": "2017-02-27 22:00",
+ "description": "Test flag for dev"
  }
 
-where:
-  taskType can be one of killSwitch or fallThroughRollout
-  value can be:
-    true or false if taskType is killSwitch OR
-    a json object of this shape if taskType is fallThroughRollout:
-    [
-       {
-          variation: 0, // true
-          weight: 100000,
-       },
-       {
-          variation: 1, // false
-          weight: 0,
-       }
-   ]
+ where:
+ taskType can be one of killSwitch or fallThroughRollout
+ value can be:
+ true or false if taskType is killSwitch OR
+ a json object of this shape if taskType is fallThroughRollout:
+ [
+ {
+ variation: 0, // true
+ weight: 100000,
+ },
+ {
+ variation: 1, // false
+ weight: 0,
+ }
+ ]
  targetDeploymentDateTime must be in the format of YYYY-MM-DD HH:mm
  description is a textual description of the purpose of the flag for human readability
-*/
+ */
 const POLL_INTERVAL_SECONDS = 60; // 1 minute
-export const TASK_TYPES = keyMirror({
-  killSwitch: null,
-  fallThroughRollout: null,
-});
-const headers = {
-  Accept: '*/*',
-  'Content-Type': 'application/json',
-  Authorization: config.launchDarkly.apiKey,
-  'accept-encoding': 'gzip, deflate'
-};
-
-// list all flags in the current project
-const getScheduledFlags = async() => {
-  const url = `${config.launchDarkly.rest.baseUrl}${config.launchDarkly.rest.flags}?env=${config.launchDarkly.environment}&tag=scheduled`;
-  try {
-    const response = await fetch(url, {
-      method: 'GET',
-      headers,
-    });
-
-    const data = await response.json();
-    return data.items;
-  } catch (e) {
-    console.log(`getScheduledFlags: ERROR: ${e}. Will retry again later.`);
-    return [];
-  }
-};
 
 const main = async() => {
   console.log(`main: ${moment().format('YYYY-MM-DD HH:mm:ss')} ld-scheduler is waking up with appEnv: ${config.appEnv}, ld.environment: ${config.launchDarkly.environment}`);
   const scheduledFlags = await getScheduledFlags();
 
-  /*
-   HACK: use flag.description field to store scheduled task details in launchDarkly's database in this format:
-   {
-   "taskType": "killSwitch",
-   "value": true,
-   "targetDeploymentDateTime": "2017-02-27 22:00",
-   "description": "Test flag for dev"
-   }
-   */
+  // get only flags that can bedeployed
   let outstandingTasks = scheduledFlags.filter(f => {
     const outstandingTask = JSON.parse(f.description);
     return moment().isAfter(moment(outstandingTask.targetDeploymentDateTime, 'YYYY-MM-DD HH:mm'));
@@ -98,10 +63,10 @@ const main = async() => {
     let path = `/environments/${config.launchDarkly.environment}`;
 
     switch (taskType) {
-      case TASK_TYPES.killSwitch:
+      case taskTypes.killSwitch:
         path += '/on';
         break;
-      case TASK_TYPES.fallThroughRollout:
+      case taskTypes.fallThroughRollout:
         path += '/fallthrough/rollout/variations';
         break;
       default:
@@ -120,7 +85,7 @@ const main = async() => {
     try {
       const response = await fetch(url, {
         method: 'PATCH',
-        headers,
+        headers: requestHeaders,
         body,
       });
 
@@ -130,95 +95,17 @@ const main = async() => {
         completeFlagDeployment(task);
 
         console.log(`main: SUCCESS LD api! Updated ${key} to ${value}.`);
-        messageSlack({isUpdateSuccessful: true, task});
+        slack({isUpdateSuccessful: true, task});
       } else {
         console.log(`main: LaunchDarkly threw an error. Did not update ${key}. Will retry again later.`);
-        messageSlack({isUpdateSuccessful: false, task});
+        slack({isUpdateSuccessful: false, task});
       }
     } catch (e) {
       console.log(`main: Network error. Could not reach LaunchDarkly. Did not update ${key}. Will retry again later. ${e}`);
-      messageSlack({isUpdateSuccessful: false, task});
+      slack({isUpdateSuccessful: false, task});
     }
   });
 };
-
-const completeFlagDeployment = async({key, tags, description}) => {
-  const body = JSON.stringify([
-    {
-      op: 'replace',
-      path: '/tags',
-      value: without(tags, 'scheduled'),
-    },
-    {
-      op: 'replace',
-      path: '/description',
-      value: description,
-    }
-  ]);
-
-  const url = `${config.launchDarkly.rest.baseUrl}${config.launchDarkly.rest.flags}/${key}`;
-
-  try {
-    const response = await fetch(url, {
-      method: 'PATCH',
-      headers,
-      body,
-    });
-
-    console.log(`completeFlagDeployment: LaunchDarkly api response: ${response.status} ${response.statusText} from: ${response.url}`);
-
-    if (response.status === 200) {
-      console.log(`completeFlagDeployment: SUCCESS LD api! Updated ${key} to ${body}.`);
-    } else {
-      console.log(`completeFlagDeployment: LaunchDarkly threw an error. Did not update ${key}. Will retry again later.`);
-    }
-  } catch (e) {
-    console.log(`completeFlagDeployment: Network error. Could not reach LaunchDarkly. Did not update ${key}. Will retry again later. ${e}`);
-  }
-};
-
-const messageSlack = async({isUpdateSuccessful, task: {taskType, key, value}}) => {
-  let message = `[${upperFirst(config.launchDarkly.environment)}] `;
-
-  switch (taskType) {
-    case TASK_TYPES.killSwitch:
-      const onOff = value ? 'on' : 'off';
-      message += isUpdateSuccessful ?
-        `Successfully switched ${onOff} ${key}.`
-        :
-        `FAILED to switch ${onOff} ${key}. Will retry in a few minutes.`;
-      break;
-
-    case TASK_TYPES.fallThroughRollout:
-      const rolloutPercentages = `{true: ${value[0].weight / 1000}%, false: ${value[1].weight / 1000}%}`;
-      message += isUpdateSuccessful ?
-        `Successfully set rollout percentage to ${rolloutPercentages} for ${key}.`
-        :
-        `FAILED to set rollout percentage for ${key}. Will retry in a few minutes.`;
-      break;
-
-    default:
-      console.log(`Slack ERROR: Unknown task type: ${taskType}`);
-      return;
-  }
-
-  const body = JSON.stringify({
-    text: message,
-  });
-
-  try {
-    const response = await fetch(config.slack, {
-      method: 'POST',
-      body,
-    });
-
-    console.log(`Posted message on slack. Response: ${response.status} ${response.statusText} from: ${response.url}`);
-  } catch (e) {
-    console.log(`Network error. Could not reach Slack. Did not post to slack regarding ${isUpdateSuccessful}, ${key}: ${targetValue}. ${e}`);
-  }
-};
-
-// listFlags();
 
 console.log(`${moment().format('YYYY-MM-DD HH:mm:ss')} ld-scheduler started with appEnv: ${config.appEnv}, ld.environment: ${config.launchDarkly.environment}`);
 main();

@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "start": "node ./src/index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint --cache --format 'node_modules/eslint-friendly-formatter' ./src"
   },
   "repository": {
     "type": "git",
@@ -40,5 +41,15 @@
     "keymirror": "^0.1.1",
     "lodash": "^4.17.4",
     "moment": "^2.17.1"
+  },
+  "devDependencies": {
+    "babel-eslint": "^7.1.1",
+    "eslint": "^3.16.1",
+    "eslint-config-airbnb": "^14.1.0",
+    "eslint-friendly-formatter": "^2.0.7",
+    "eslint-plugin-babel": "^4.1.0",
+    "eslint-plugin-import": "^2.2.0",
+    "eslint-plugin-jsx-a11y": "^4.0.0",
+    "eslint-plugin-react": "^6.10.0"
   }
 }

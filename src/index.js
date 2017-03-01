@@ -5,4 +5,4 @@ const blueBird = require('bluebird');
 global.Promise = blueBird;
 
 require('isomorphic-fetch');
-require('./scheduler');
+require('./cronJob');

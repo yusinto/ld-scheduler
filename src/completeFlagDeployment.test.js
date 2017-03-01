@@ -24,6 +24,14 @@ describe('Complete flag deployment', () => {
     }
   ]);
 
+  beforeEach(() => {
+    fetch.mockSuccess();
+  });
+
+  afterEach(() => {
+    jest.resetAllMocks();
+  });
+
   it('returns scheduled flags correctly', async() => {
     await completeFlagDeployment({
       key: 'test-flag',

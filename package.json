@@ -10,7 +10,9 @@
   },
   "jest": {
     "verbose": true,
-    "setupFiles": ["<rootDir>/test/setup.js"]
+    "setupFiles": [
+      "<rootDir>/test/setup.js"
+    ]
   },
   "repository": {
     "type": "git",

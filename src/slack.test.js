@@ -12,6 +12,10 @@ jest.mock('config', () => ({
 describe('Slack', () => {
   const slack = require('./slack').default;
 
+  beforeEach(() => {
+    fetch.mockSuccess();
+  });
+  
   afterEach(() => {
     jest.resetAllMocks();
   });

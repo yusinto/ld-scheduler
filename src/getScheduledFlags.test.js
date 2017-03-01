@@ -20,7 +20,7 @@ describe('Get scheduled flags', () => {
     expect(flags).toEqual(mockResponse.items);
   });
 
-  it('returns empty array when an error occurs', async() => {
+  it('returns empty array when the api returns an error', async() => {
     fetch.mockSuccess({}, {status: 401, statusText: 'Unauthorized'});
     const flags = await getScheduledFlags();
 

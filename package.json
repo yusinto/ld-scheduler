@@ -6,7 +6,9 @@
   "scripts": {
     "start": "node ./src/index.js",
     "test": "jest --watchAll",
-    "lint": "eslint --cache --format 'node_modules/eslint-friendly-formatter' ./src"
+    "lint": "eslint --cache --format 'node_modules/eslint-friendly-formatter' ./src",
+    "compile": "rimraf lib/* && babel src -d lib",
+    "prepublish": "npm run compile"
   },
   "jest": {
     "verbose": true,

@@ -1,9 +1,8 @@
-import config from 'config';
 import {taskTypes} from './constants';
 import upperFirst from 'lodash/upperFirst';
 
-export default async ({isUpdateSuccessful, task: {taskType, key, value}}) => {
-  let message = `[${upperFirst(config.launchDarkly.environment)}] `;
+export default async ({isUpdateSuccessful, task: {taskType, key, value}}, ldEnvironment, slackWebhook) => {
+  let message = `[${upperFirst(ldEnvironment)}] `;
 
   if (taskType === taskTypes.killSwitch) {
     const onOff = value ? 'on' : 'off';
@@ -24,7 +23,7 @@ export default async ({isUpdateSuccessful, task: {taskType, key, value}}) => {
 
   const body = JSON.stringify({text: message});
   try {
-    const response = await fetch(config.slack, {
+    const response = await fetch(slackWebhook, {
       method: 'POST',
       body,
     });

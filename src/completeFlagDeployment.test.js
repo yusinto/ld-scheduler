@@ -7,7 +7,9 @@ jest.mock('config', () => ({
     }
   }
 }));
-jest.mock('./constants', () => ({requestHeaders: 'headers'}));
+jest.mock('./getRequestHeaders', () => global.td.function('mockGetRequestHeaders'));
+
+import getRequestHeaders from './getRequestHeaders';
 
 describe('Complete flag deployment', () => {
   const completeFlagDeployment = require('./completeFlagDeployment').default;
@@ -26,6 +28,7 @@ describe('Complete flag deployment', () => {
 
   beforeEach(() => {
     fetch.mockSuccess();
+    td.when(getRequestHeaders(td.matchers.anything())).thenReturn('headers');
   });
 
   afterEach(() => {

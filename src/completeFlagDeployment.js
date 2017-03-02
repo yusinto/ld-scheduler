@@ -1,8 +1,8 @@
 import config from 'config';
-import {requestHeaders} from './constants';
+import getRequestHeaders from './getRequestHeaders';
 import without from 'lodash/without';
 
-export default async({key, tags, description}) => {
+export default async({key, tags, description}, apiKey) => {
   const body = JSON.stringify([
     {
       op: 'replace',
@@ -21,7 +21,7 @@ export default async({key, tags, description}) => {
   try {
     const response = await fetch(url, {
       method: 'PATCH',
-      headers: requestHeaders,
+      headers: getRequestHeaders(apiKey),
       body,
     });
 

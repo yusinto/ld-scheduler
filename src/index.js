@@ -1,10 +1,10 @@
 import 'isomorphic-fetch';
 import blueBird from 'bluebird';
-import scheduler from './scheduler';
+import cronJob from './cronJob';
 
 global.Promise = blueBird;
 
-export const ldScheduler = scheduler;
+export const ldScheduler = cronJob;
 export default {
-  ldScheduler: scheduler
+  ldScheduler: cronJob
 };

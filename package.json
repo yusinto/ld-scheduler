@@ -1,6 +1,6 @@
 {
   "name": "ld-scheduler",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Schedule launch darkly flags on or off",
   "main": "lib/index.js",
   "scripts": {

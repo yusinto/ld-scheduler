@@ -28,10 +28,12 @@ npm i --save ld-scheduler
 
 ## Quickstart
 
-1. You should create a new node project and import ld-scheduler and call the runEveryXSeconds function.
-If you don't use slack (you should!) you don't have to specify the slack property. By default, ld-scheduler
-polls launch darkly every 60 seconds:
+1. Create a new node project and set it up with babel. You'll need babel-register, babel-polyfill and babel-preset-latest. 
+See [here](https://github.com/yusinto/ld-scheduler/tree/master/example) for example.
 
+2. In your main code file, import ld-scheduler and call the runEveryXSeconds function. 
+If you don't use slack (you should!) you don't have to specify the slack property. 
+By default, ld-scheduler polls launch darkly every 60 seconds:
     ```javascript
     import ldScheduler from 'ld-scheduler';
     
@@ -42,7 +44,8 @@ polls launch darkly every 60 seconds:
     });
     ```
 
-2. Tag your feature flag. In launch darkly's dashboard, under the Settings tab of your feature flag, under Tags, add a tag called "scheduled". Still in the Settings tab, under Description, add the following JSON object:
+3. Tag your feature flag. In launch darkly's dashboard, under the Settings tab of your feature flag, under Tags, add a tag called "scheduled". 
+Still in the Settings tab, under Description, add the following JSON object:
 
     ```javascript
     {
@@ -63,8 +66,10 @@ polls launch darkly every 60 seconds:
   
     ![ld-scheduler-dashboard-config](https://cloud.githubusercontent.com/assets/1593077/23578470/d558a13e-012b-11e7-88ff-0fefb2b20892.png)
 
-3. Run npm start and watch magic happens!
+4. Run npm start (you should set this up in package.json to run "node your-index.js") and watch magic happens!
 
 ## Example
-Check [example](https://github.com/yusinto/ld-scheduler/tree/master/example) for a fully working example. Remember you'll need to enter your own launch darkly api key and your own slack url (if you use slack).
+Check [example](https://github.com/yusinto/ld-scheduler/tree/master/example) for a fully working example. 
+Remember you'll need to enter your own launch darkly api key and your own slack url (if you use slack).
+
 

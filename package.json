@@ -1,8 +1,8 @@
 {
   "name": "ld-scheduler",
   "version": "0.0.1",
-  "description": "Schedule your launch darkly flags on or off",
-  "main": "index.js",
+  "description": "Schedule launch darkly flags on or off",
+  "main": "lib/index.js",
   "scripts": {
     "start": "node ./src/index.js",
     "test": "jest --watchAll",

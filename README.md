@@ -2,7 +2,7 @@
 
 [![npm version](https://img.shields.io/npm/v/ld-scheduler.svg?style=flat-square)](https://www.npmjs.com/package/ld-scheduler) [![npm downloads](https://img.shields.io/npm/dm/ld-scheduler.svg?style=flat-square)](https://www.npmjs.com/package/ld-scheduler) [![npm](https://img.shields.io/npm/dt/ld-scheduler.svg?style=flat-square)](https://www.npmjs.com/package/ld-scheduler) [![npm](https://img.shields.io/npm/l/ld-scheduler.svg?style=flat-square)](https://www.npmjs.com/package/ld-scheduler) 
 
-> **A library to schedule launch darkly feature flag deployment** :clap:
+> **A library to schedule launch darkly feature flag deployment** :alarm_clock:
 
 So you use [Launch Darkly](https://launchdarkly.com/faq.html) for feature flagging and a/b testing which is very cool. Why this package then you ask?
 

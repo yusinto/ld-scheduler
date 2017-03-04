@@ -1,9 +1,12 @@
-import config from 'config';
+import {launchDarklyFlagsEndpoint} from './constants';
 import getRequestHeaders from './getRequestHeaders';
+import Logger from './log';
+
+const log = new Logger('getScheduledFlags');
 
 // list all scheduled flags in the default project
-export default async(ldEnvironment, apiKey) => {
-  const url = `${config.launchDarkly.rest.baseUrl}${config.launchDarkly.rest.flags}?env=${ldEnvironment}&tag=scheduled`;
+export default async(environment, apiKey) => {
+  const url = `${launchDarklyFlagsEndpoint}?env=${environment}&tag=scheduled`;
   try {
     const response = await fetch(url, {
       method: 'GET',
@@ -15,10 +18,10 @@ export default async(ldEnvironment, apiKey) => {
       return data.items;
     }
 
-    console.log(`getScheduledFlag ERROR: api response: ${response.status} ${response.statusText} from: ${response.url}`);
+    log.error(`api response: ${response.status} ${response.statusText} from: ${response.url}`);
     return [];
   } catch (e) {
-    console.log(`getScheduledFlags EXCEPTION: ${e}. Will retry again later.`);
+    log.error(`${e}. Will retry again later.`);
     return [];
   }
 };

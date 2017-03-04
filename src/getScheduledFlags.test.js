@@ -1,13 +1,7 @@
-jest.mock('config', () => ({
-  launchDarkly: {
-    environment: 'test',
-    rest: {
-      baseUrl: 'mockBaseUrl',
-      flags: '/flags',
-    }
-  }
+jest.mock('./constants', () => ({
+  requestHeaders: 'headers',
+  launchDarklyFlagsEndpoint: '/some/api/endpoint'
 }));
-jest.mock('./constants', () => ({requestHeaders: 'headers'}));
 
 describe('Get scheduled flags', () => {
   const getScheduledFlags = require('./getScheduledFlags').default;
@@ -21,7 +15,7 @@ describe('Get scheduled flags', () => {
   });
 
   it('returns empty array when the api returns an error', async() => {
-    fetch.mockSuccess({}, {status: 401, statusText: 'Unauthorized'});
+    fetch.mockSuccess({}, {status: 401, statusText: 'Unauthorized', url: '/some/api/endpoint'});
     const flags = await getScheduledFlags();
 
     expect(flags.length).toEqual(0);

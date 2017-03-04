@@ -1,11 +1,5 @@
-jest.mock('config', () => ({
-  launchDarkly: {
-    environment: 'test',
-    rest: {
-      baseUrl: 'mockBaseUrl',
-      flags: '/flags',
-    }
-  }
+jest.mock('./constants', () => ({
+  launchDarklyFlagsEndpoint: 'mockBaseUrl/flags'
 }));
 jest.mock('./getRequestHeaders', () => global.td.function('mockGetRequestHeaders'));
 

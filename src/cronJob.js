@@ -1,15 +1,16 @@
-import moment from 'moment';
 import scheduler from './scheduler';
+import Logger from './log';
 
-const POLL_INTERVAL_SECONDS = 60; // 1 minute
+const log = new Logger('cronJob');
+const cronJob = ({environment, apiKey, slack, pollIntervalSeconds = 60}) => {
+  log.info(`ld-scheduler started. Polling interval: ${pollIntervalSeconds}s`);
+  scheduler({environment, apiKey, slack});
 
-const cronJob = ({ldEnvironment, apiKey, slackWebhook}) => {
-  console.log(`${moment().format('YYYY-MM-DD HH:mm:ss')} ld-scheduler started in ld.environment: ${ldEnvironment}`);
-  scheduler({ldEnvironment, apiKey, slackWebhook});
+  const delayedCode = () => setInterval(() => {
+    scheduler({environment, apiKey, slack});
+  }, pollIntervalSeconds * 1000);
 
-  setInterval(() => {
-    scheduler({ldEnvironment, apiKey, slackWebhook});
-  }, POLL_INTERVAL_SECONDS * 1000);
+  setTimeout(delayedCode, 60 * 1000);
 };
 
 export default cronJob;

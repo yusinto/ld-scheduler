@@ -6,11 +6,9 @@ const cronJob = ({environment, apiKey, slack, pollIntervalSeconds = 60}) => {
   log.info(`ld-scheduler started. Polling interval: ${pollIntervalSeconds}s`);
   scheduler({environment, apiKey, slack});
 
-  const delayedCode = () => setInterval(() => {
+  setInterval(() => {
     scheduler({environment, apiKey, slack});
   }, pollIntervalSeconds * 1000);
-
-  setTimeout(delayedCode, 60 * 1000);
 };
 
 export default cronJob;

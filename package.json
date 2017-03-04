@@ -1,12 +1,14 @@
 {
   "name": "ld-scheduler",
   "version": "0.0.1",
-  "description": "Schedule your launch darkly flags to turn on or off",
+  "description": "Schedule your launch darkly flags on or off",
   "main": "index.js",
   "scripts": {
     "start": "node ./src/index.js",
     "test": "jest --watchAll",
-    "lint": "eslint --cache --format 'node_modules/eslint-friendly-formatter' ./src"
+    "lint": "eslint --cache --format 'node_modules/eslint-friendly-formatter' ./src",
+    "build": "rimraf lib/* && babel src -d lib --ignore *.test.js",
+    "prepublish": "npm run build"
   },
   "jest": {
     "verbose": true,
@@ -34,6 +36,7 @@
   },
   "homepage": "https://github.com/yusinto/ld-scheduler#readme",
   "dependencies": {
+    "babel-cli": "^6.23.0",
     "babel-plugin-array-includes": "^2.0.3",
     "babel-plugin-transform-async-to-generator": "^6.22.0",
     "babel-plugin-transform-decorators-legacy": "^1.3.4",
@@ -41,8 +44,8 @@
     "babel-preset-latest": "^6.22.0",
     "babel-preset-stage-0": "^6.22.0",
     "babel-register": "^6.23.0",
+    "babel-runtime": "^6.23.0",
     "bluebird": "^3.4.7",
-    "config": "^1.25.1",
     "isomorphic-fetch": "^2.2.1",
     "keymirror": "^0.1.1",
     "lodash": "^4.17.4",
@@ -58,6 +61,7 @@
     "eslint-plugin-jsx-a11y": "^4.0.0",
     "eslint-plugin-react": "^6.10.0",
     "jest": "^19.0.2",
+    "rimraf": "^2.6.1",
     "testdouble": "^1.11.1"
   }
 }

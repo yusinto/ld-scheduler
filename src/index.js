@@ -1,8 +1,11 @@
-require('babel-register');
-require('babel-polyfill');
+import 'isomorphic-fetch';
+import blueBird from 'bluebird';
+import cronJob from './cronJob';
+import scheduler from './scheduler';
 
-const blueBird = require('bluebird');
 global.Promise = blueBird;
 
-require('isomorphic-fetch');
-require('./cronJob');
+export default {
+  runOnce: scheduler,
+  runEveryXSeconds: cronJob
+};

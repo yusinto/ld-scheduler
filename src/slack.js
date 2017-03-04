@@ -1,9 +1,11 @@
-import config from 'config';
 import {taskTypes} from './constants';
 import upperFirst from 'lodash/upperFirst';
+import Logger from './log';
 
-export default async ({isUpdateSuccessful, task: {taskType, key, value}}) => {
-  let message = `[${upperFirst(config.launchDarkly.environment)}] `;
+const log = new Logger('slack');
+
+export default async ({isUpdateSuccessful, task: {taskType, key, value}}, environment, slack) => {
+  let message = `[${upperFirst(environment)}] `;
 
   if (taskType === taskTypes.killSwitch) {
     const onOff = value ? 'on' : 'off';
@@ -18,19 +20,19 @@ export default async ({isUpdateSuccessful, task: {taskType, key, value}}) => {
       :
       `FAILED to set rollout percentage for ${key}. Will retry in a few minutes.`;
   } else {
-    console.log(`Slack ERROR: Unknown task type: ${taskType}`);
+    log.error(`Unknown task type: ${taskType}`);
     return;
   }
 
   const body = JSON.stringify({text: message});
   try {
-    const response = await fetch(config.slack, {
+    const response = await fetch(slack, {
       method: 'POST',
       body,
     });
 
-    console.log(`Posted message on slack. Response: ${response.status} ${response.statusText} from: ${response.url}`);
+    log.info(`Posted message on slack. Response: ${response.status} ${response.statusText} from: ${response.url}`);
   } catch (e) {
-    console.log(`Network error. Could not reach Slack. Did not post to slack regarding ${isUpdateSuccessful}, ${key}: ${value}. ${e}`);
+    log.error(`Network error. Could not reach Slack. Did not post to slack regarding ${isUpdateSuccessful}, ${key}: ${value}. ${e}`);
   }
 };

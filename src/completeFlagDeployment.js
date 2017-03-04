@@ -1,8 +1,11 @@
-import config from 'config';
-import {requestHeaders} from './constants';
+import {launchDarklyFlagsEndpoint} from './constants';
+import getRequestHeaders from './getRequestHeaders';
 import without from 'lodash/without';
+import Logger from './log';
 
-export default async({key, tags, description}) => {
+const log = new Logger('completeFlagDeployment');
+
+export default async({key, tags, description}, apiKey) => {
   const body = JSON.stringify([
     {
       op: 'replace',
@@ -16,23 +19,23 @@ export default async({key, tags, description}) => {
     }
   ]);
 
-  const url = `${config.launchDarkly.rest.baseUrl}${config.launchDarkly.rest.flags}/${key}`;
+  const url = `${launchDarklyFlagsEndpoint}/${key}`;
 
   try {
     const response = await fetch(url, {
       method: 'PATCH',
-      headers: requestHeaders,
+      headers: getRequestHeaders(apiKey),
       body,
     });
 
-    console.log(`completeFlagDeployment: LaunchDarkly api response: ${response.status} ${response.statusText} from: ${response.url}`);
+    log.info(`LaunchDarkly api response: ${response.status} ${response.statusText} from: ${response.url}`);
 
     if (response.status === 200) {
-      console.log(`completeFlagDeployment: SUCCESS LD api! Updated ${key} to ${body}.`);
+      log.info(`SUCCESS LD api! Updated ${key} to ${body}.`);
     } else {
-      console.log(`completeFlagDeployment: LaunchDarkly threw an error. Did not update ${key}. Will retry again later.`);
+      log.error(`LaunchDarkly threw an error. Did not update ${key}. Will retry again later.`);
     }
   } catch (e) {
-    console.log(`completeFlagDeployment: Network error. Could not reach LaunchDarkly. Did not update ${key}. Will retry again later. ${e}`);
+    log.error(`Network error. Could not reach LaunchDarkly. Did not update ${key}. Will retry again later. ${e}`);
   }
 };

@@ -1,13 +1,9 @@
-jest.mock('config', () => ({
-  launchDarkly: {
-    environment: 'test',
-    rest: {
-      baseUrl: 'mockBaseUrl',
-      flags: '/flags',
-    }
-  }
+jest.mock('./constants', () => ({
+  launchDarklyFlagsEndpoint: 'mockBaseUrl/flags'
 }));
-jest.mock('./constants', () => ({requestHeaders: 'headers'}));
+jest.mock('./getRequestHeaders', () => global.td.function('mockGetRequestHeaders'));
+
+import getRequestHeaders from './getRequestHeaders';
 
 describe('Complete flag deployment', () => {
   const completeFlagDeployment = require('./completeFlagDeployment').default;
@@ -26,6 +22,7 @@ describe('Complete flag deployment', () => {
 
   beforeEach(() => {
     fetch.mockSuccess();
+    td.when(getRequestHeaders(td.matchers.anything())).thenReturn('headers');
   });
 
   afterEach(() => {

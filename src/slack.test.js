@@ -1,21 +1,10 @@
-jest.mock('config', () => ({
-  launchDarkly: {
-    environment: 'test',
-    rest: {
-      baseUrl: 'mockBaseUrl',
-      flags: '/flags',
-    }
-  },
-  slack: '/url/to/slack/webhook'
-}));
+import slack from './slack';
 
 describe('Slack', () => {
-  const slack = require('./slack').default;
-
   beforeEach(() => {
     fetch.mockSuccess();
   });
-  
+
   afterEach(() => {
     jest.resetAllMocks();
   });
@@ -28,7 +17,7 @@ describe('Slack', () => {
         key: 'test-flag',
         value: true
       }
-    });
+    }, 'test', '/url/to/slack/webhook');
 
     expect(fetch).toHaveBeenCalledWith('/url/to/slack/webhook', {
       method: 'POST',
@@ -44,7 +33,7 @@ describe('Slack', () => {
         key: 'test-flag',
         value: false
       }
-    });
+    }, 'test', '/url/to/slack/webhook');
 
     expect(fetch).toHaveBeenCalledWith('/url/to/slack/webhook', {
       method: 'POST',
@@ -69,7 +58,7 @@ describe('Slack', () => {
           }
         ]
       }
-    });
+    }, 'test', '/url/to/slack/webhook');
 
     expect(fetch).toHaveBeenCalledWith('/url/to/slack/webhook', {
       method: 'POST',
@@ -86,7 +75,7 @@ describe('Slack', () => {
         key: 'test-flag',
         value: true
       }
-    });
+    }, 'test', '/url/to/slack/webhook');
 
     expect(fetch).toHaveBeenCalledWith('/url/to/slack/webhook', {
       method: 'POST',
@@ -102,7 +91,7 @@ describe('Slack', () => {
         key: 'test-flag',
         value: false
       }
-    });
+    }, 'test', '/url/to/slack/webhook');
 
     expect(fetch).toHaveBeenCalledWith('/url/to/slack/webhook', {
       method: 'POST',
@@ -127,7 +116,7 @@ describe('Slack', () => {
           }
         ]
       }
-    });
+    }, 'test', '/url/to/slack/webhook');
 
     expect(fetch).toHaveBeenCalledWith('/url/to/slack/webhook', {
       method: 'POST',

@@ -1,12 +1,16 @@
-import moment from 'moment';
-import config from 'config';
 import scheduler from './scheduler';
+import Logger from './log';
 
-const POLL_INTERVAL_SECONDS = 60; // 1 minute
+const log = new Logger('cronJob');
+const cronJob = ({environment, apiKey, slack, pollIntervalSeconds = 60}) => {
+  log.info(`ld-scheduler started. Polling interval: ${pollIntervalSeconds}s`);
+  scheduler({environment, apiKey, slack});
 
-console.log(`${moment().format('YYYY-MM-DD HH:mm:ss')} ld-scheduler started with appEnv: ${config.appEnv}, ld.environment: ${config.launchDarkly.environment}`);
-scheduler();
+  const delayedCode = () => setInterval(() => {
+    scheduler({environment, apiKey, slack});
+  }, pollIntervalSeconds * 1000);
 
-setInterval(() => {
-  scheduler();
-}, POLL_INTERVAL_SECONDS * 1000);
+  setTimeout(delayedCode, 60 * 1000);
+};
+
+export default cronJob;

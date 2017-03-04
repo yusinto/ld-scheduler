@@ -1,29 +1,21 @@
 jest.mock('moment', () => global.td.function('moment'));
-jest.mock('config', () => ({
-  appEnv: 'development',
-  launchDarkly: {
-    environment: 'test',
-    rest: {
-      baseUrl: 'mockBaseUrl',
-      flags: '/flags',
-    }
-  }
-}));
 jest.mock('./constants', () => ({
-  requestHeaders: 'headers',
   taskTypes: {
     killSwitch: 'killSwitch',
     fallThroughRollout: 'fallThroughRollout'
-  }
+  },
+  launchDarklyFlagsEndpoint: 'mockBaseUrl/flags'
 }));
+jest.mock('./getRequestHeaders', () => global.td.function('getRequestHeaders'));
 jest.mock('./getScheduledFlags', () => global.td.function('getScheduledFlags'));
 jest.mock('./completeFlagDeployment', () => global.td.function('completeFlagDeployment'));
-jest.mock('./slack', () => global.td.function('slack'));
+jest.mock('./slack', () => global.td.function('messageSlack'));
 
 import moment from 'moment';
+import getRequestHeaders from './getRequestHeaders';
 import getScheduledFlags from './getScheduledFlags';
 import completeFlagDeployment from './completeFlagDeployment';
-import slack from './slack';
+import messageSlack from './slack';
 
 const mockMomentFormat = td.function('mockMomentFormat');
 const mockMomentIsAfter = td.function('mockMomentIsAfter');
@@ -37,6 +29,7 @@ describe('Scheduler', () => {
       isAfter: mockMomentIsAfter
     });
     td.when(mockMomentFormat(td.matchers.anything())).thenReturn('TestDate');
+    td.when(getRequestHeaders(td.matchers.anything())).thenReturn('headers');
   });
 
   afterEach(() => {
@@ -47,7 +40,9 @@ describe('Scheduler', () => {
   it('does not do anything if there is no outstanding task', async() => {
     fetch.mockSuccess();
     td.when(mockMomentIsAfter(td.matchers.anything())).thenReturn(false);
-    td.when(getScheduledFlags()).thenReturn([]);
+    td.when(getScheduledFlags(td.matchers.anything(), td.matchers.anything())).thenReturn([]);
+
+    await scheduler({environment: 'test', apiKey: 'someKey', slack: '/url/to/slack/webhook'});
 
     expect(fetch).not.toHaveBeenCalledWith('/url/to/slack/webhook', {
       method: 'POST',
@@ -73,11 +68,11 @@ describe('Scheduler', () => {
       tags: scheduledFlag.tags,
       ...JSON.parse(scheduledFlag.description)
     };
-    td.when(getScheduledFlags()).thenReturn([scheduledFlag]);
+    td.when(getScheduledFlags(td.matchers.anything(), td.matchers.anything())).thenReturn([scheduledFlag]);
     td.when(mockMomentIsAfter(td.matchers.anything())).thenReturn(true);
 
     // act
-    await scheduler();
+    await scheduler({environment: 'test', apiKey: 'someKey', slack: '/url/to/slack/webhook'});
 
     // assert
     expect(fetch).toHaveBeenCalledWith('mockBaseUrl/flags/flag1', {
@@ -89,8 +84,8 @@ describe('Scheduler', () => {
         value: true,
       }])
     });
-    td.verify(completeFlagDeployment(outstandingTask));
-    td.verify(slack({isUpdateSuccessful: true, task: outstandingTask}));
+    td.verify(completeFlagDeployment(outstandingTask, 'someKey'));
+    td.verify(messageSlack({isUpdateSuccessful: true, task: outstandingTask}, 'test', '/url/to/slack/webhook'));
   });
 
   it('patches when there is a scheduled fallThroughRollout flag', async() => {
@@ -120,11 +115,11 @@ describe('Scheduler', () => {
       tags: scheduledFlag.tags,
       ...JSON.parse(scheduledFlag.description)
     };
-    td.when(getScheduledFlags()).thenReturn([scheduledFlag]);
+    td.when(getScheduledFlags(td.matchers.anything(), td.matchers.anything())).thenReturn([scheduledFlag]);
     td.when(mockMomentIsAfter(td.matchers.anything())).thenReturn(true);
 
     // act
-    await scheduler();
+    await scheduler({environment: 'test', apiKey: 'someKey', slack: '/url/to/slack/webhook'});
 
     // assert
     expect(fetch).toHaveBeenCalledWith('mockBaseUrl/flags/flag1', {
@@ -145,8 +140,8 @@ describe('Scheduler', () => {
         ],
       }])
     });
-    td.verify(completeFlagDeployment(outstandingTask));
-    td.verify(slack({isUpdateSuccessful: true, task: outstandingTask}));
+    td.verify(completeFlagDeployment(outstandingTask, 'someKey'));
+    td.verify(messageSlack({isUpdateSuccessful: true, task: outstandingTask}, 'test', '/url/to/slack/webhook'));
   });
 
   it('updates slack with correct message if path fails', async() => {
@@ -176,11 +171,11 @@ describe('Scheduler', () => {
       tags: scheduledFlag.tags,
       ...JSON.parse(scheduledFlag.description)
     };
-    td.when(getScheduledFlags()).thenReturn([scheduledFlag]);
+    td.when(getScheduledFlags(td.matchers.anything(), td.matchers.anything())).thenReturn([scheduledFlag]);
     td.when(mockMomentIsAfter(td.matchers.anything())).thenReturn(true);
 
     // act
-    await scheduler();
+    await scheduler({environment: 'test', apiKey: 'someKey', slack: '/url/to/slack/webhook'});
 
     // assert
     expect(fetch).toHaveBeenCalledWith('mockBaseUrl/flags/flag1', {
@@ -201,7 +196,7 @@ describe('Scheduler', () => {
         ],
       }])
     });
-    td.verify(completeFlagDeployment(outstandingTask), {times: 0});
-    td.verify(slack({isUpdateSuccessful: false, task: outstandingTask}));
+    td.verify(completeFlagDeployment(outstandingTask, 'someKey'), {times: 0});
+    td.verify(messageSlack({isUpdateSuccessful: false, task: outstandingTask}, 'test', '/url/to/slack/webhook'));
   });
 });

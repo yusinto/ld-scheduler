@@ -26,12 +26,9 @@
   },
   "homepage": "https://github.com/yusinto/ld-scheduler#readme",
   "dependencies": {
-    "babel-plugin-array-includes": "^2.0.3",
-    "babel-plugin-transform-async-to-generator": "^6.22.0",
-    "babel-plugin-transform-decorators-legacy": "^1.3.4",
     "babel-polyfill": "^6.23.0",
     "babel-preset-latest": "^6.22.0",
-    "babel-preset-stage-0": "^6.22.0",
-    "babel-register": "^6.23.0"
+    "babel-register": "^6.23.0",
+    "ld-scheduler": "^1.0.0"
   }
 }

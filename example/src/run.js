@@ -1,4 +1,4 @@
-import ldScheduler from '../../lib';
+import ldScheduler from 'ld-scheduler';
 
 ldScheduler.runEveryXSeconds({
   environment: 'test',

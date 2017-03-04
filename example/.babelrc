@@ -1,11 +1,5 @@
 {
   "presets": [
-    "latest",
-    "stage-0"
-  ],
-  "plugins": [
-    "transform-decorators-legacy",
-    "array-includes",
-    "transform-async-to-generator",
+    "latest"
   ]
 }

@@ -1,2 +1,2 @@
-# ld-scheduler
-Schedule Launch Darkly flags to turn on or off
+# ld-scheduler-example
+Schedule Launch Darkly flags on or off

@@ -52,7 +52,7 @@ polls launch darkly every 60 seconds:
        "description": "Test flag for dev"
     }
     ``` 
-    where
+    **where**
     
      * taskType is killSwitch
      * value is true (kill switch on) or false (kill switch off)

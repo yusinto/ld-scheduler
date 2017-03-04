@@ -14,7 +14,7 @@ of your app from the deployment of your features. Enter ld-scheduler.
 You can now create flags in launch darkly and then set a date and time you want the kill switch to be turned on or off. This decouples your app deployment
 from feature deployment. No one should stay up past midnight just to turn on/off the kill switch.
 
- * Schedule feature flags on or off at exact date and time (useful for zero dark thirty deployments)  
+ * Schedule feature flags on or off at an exact date and time (useful for zero dark thirty deployments)  
  * Decouple code deployment from feature deployment
  * Works with slack! Ld-scheduler posts a message to slack when it successfully updates (or fails to update) your flags!
 
@@ -66,7 +66,7 @@ Still in the Settings tab, under Description, add the following JSON object:
   
     ![ld-scheduler-dashboard-config](https://cloud.githubusercontent.com/assets/1593077/23578470/d558a13e-012b-11e7-88ff-0fefb2b20892.png)
 
-4. Run npm start (you should set this up in package.json to run "node your-index.js") and watch magic happens!
+4. Run your project and watch magic happens!
 
 ## Example
 Check [example](https://github.com/yusinto/ld-scheduler/tree/master/example) for a fully working example. 

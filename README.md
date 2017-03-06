@@ -60,7 +60,7 @@ Still in the Settings tab, under Description, add the following JSON object:
      * taskType is killSwitch
      * value is true (kill switch on) or false (kill switch off)
      * targetDeploymentDateTime must be in the format of YYYY-MM-DD HH:mm
-     * description is a textual description of the purpose of the flag for human readability
+     * description is a textual string for the purpose of human readability
 
     The screenshot below is an example configuration:
   

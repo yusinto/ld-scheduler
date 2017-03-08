@@ -51,7 +51,7 @@ Still in the Settings tab, under Description, add the following JSON object:
     {
        "taskType": "killSwitch",
        "value": true,
-       "targetDeploymentDateTime": "2017-02-27 22:00",
+       "targetDeploymentDateTime": "2017-02-27 22:00 +11:00",
        "description": "Test flag for dev"
     }
     ``` 
@@ -59,12 +59,13 @@ Still in the Settings tab, under Description, add the following JSON object:
     
      * taskType is killSwitch
      * value is true (kill switch on) or false (kill switch off)
-     * targetDeploymentDateTime must be in the format of YYYY-MM-DD HH:mm
+     * targetDeploymentDateTime must be in the format of YYYY-MM-DD HH:mm Z
+       **Note**: the utc offset is important otherwise moment will use the host's timezone. 
      * description is a textual string for the purpose of human readability
 
     The screenshot below is an example configuration:
   
-    ![ld-scheduler-dashboard-config](https://cloud.githubusercontent.com/assets/1593077/23578470/d558a13e-012b-11e7-88ff-0fefb2b20892.png)
+    ![ld-scheduler-flag-settings](https://cloud.githubusercontent.com/assets/1593077/23701757/3af4af60-044c-11e7-93e7-749175789ebe.png)
 
 4. Run your project and watch magic happens!
 

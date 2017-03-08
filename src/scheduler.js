@@ -14,7 +14,7 @@ const log = new Logger('scheduler');
  {
  "taskType": "killSwitch",
  "value": true,
- "targetDeploymentDateTime": "2017-02-27 22:00",
+ "targetDeploymentDateTime": "2017-02-27 22:00 +11:00",
  "description": "Test flag for dev"
  }
 
@@ -26,7 +26,7 @@ const log = new Logger('scheduler');
  a json object of this shape if taskType is fallThroughRollout:
  {
  "taskType": "fallThroughRollout",
- "targetDeploymentDateTime": "2017-03-3 02:33",
+ "targetDeploymentDateTime": "2017-03-3 02:33 +11:00",
  "description": "Flag1 description",
  "value": [
  {
@@ -51,7 +51,13 @@ export default async({environment, apiKey, slack}) => {
     let outstandingTask;
     try {
       outstandingTask = JSON.parse(f.description);
-      return moment().isAfter(moment(outstandingTask.targetDeploymentDateTime, 'YYYY-MM-DD HH:mm'));
+
+      const currentDateTime = moment();
+      const targetDeploymentDateTime = moment(outstandingTask.targetDeploymentDateTime, 'YYYY-MM-DD HH:mm Z');
+      const isLegible = currentDateTime.isAfter(targetDeploymentDateTime);
+
+      // log.info(`Found scheduled flag ${f.key} with targetDeploymentDateTime: ${targetDeploymentDateTime}. IsLegible? ${isLegible}`);
+      return isLegible;
     } catch (e) {
       log.error(`${f.key} is scheduled, but its description field is not a valid json object: ${f.description}`);
       return false;

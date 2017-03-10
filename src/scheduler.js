@@ -9,8 +9,9 @@ import Logger from './log';
 const log = new Logger('scheduler');
 
 /*
- To use this scheduler, you'll need to add a tag to your feature flag called "scheduled" and then add a json object
- to the description field of that flag. That json object should look like this:
+ To use this scheduler, you'll need to add one or more 'scheduled' tags to your feature flag, each prefixed with the environment name.
+ For example, if you have both a test and production environment, you will need 2 tags: 'test-scheduled' and 'production-scheduled'.
+ Then you'll need to add a json object to the description field of that flag. That json object should look like this:
  {
  "taskType": "killSwitch",
  "value": true,
@@ -39,7 +40,7 @@ const log = new Logger('scheduler');
  }
  ]
  }
- targetDeploymentDateTime must be in the format of YYYY-MM-DD HH:mm
+ targetDeploymentDateTime must be in the format of YYYY-MM-DD HH:mm +hh:mm
  description is a textual description of the purpose of the flag for human readability
  */
 export default async({environment, apiKey, slack}) => {
@@ -54,10 +55,10 @@ export default async({environment, apiKey, slack}) => {
 
       const currentDateTime = moment();
       const targetDeploymentDateTime = moment(outstandingTask.targetDeploymentDateTime, 'YYYY-MM-DD HH:mm Z');
-      const isLegible = currentDateTime.isAfter(targetDeploymentDateTime);
+      const isScheduledTimePassed = currentDateTime.isAfter(targetDeploymentDateTime);
 
-      // log.info(`Found scheduled flag ${f.key} with targetDeploymentDateTime: ${targetDeploymentDateTime}. IsLegible? ${isLegible}`);
-      return isLegible;
+      log.info(`Found scheduled flag ${f.key} with targetDeploymentDateTime: ${targetDeploymentDateTime}. isScheduledTimePassed? ${isScheduledTimePassed}`);
+      return isScheduledTimePassed;
     } catch (e) {
       log.error(`${f.key} is scheduled, but its description field is not a valid json object: ${f.description}`);
       return false;
@@ -109,7 +110,7 @@ export default async({environment, apiKey, slack}) => {
       log.info(`LaunchDarkly api response: ${response.status} ${response.statusText} from: ${response.url}`);
 
       if (response.status === 200) {
-        completeFlagDeployment(task, apiKey);
+        completeFlagDeployment(task, environment, apiKey);
 
         log.info(`SUCCESS LD api! Updated ${key} to ${JSON.stringify(value)}.`);
         messageSlack({isUpdateSuccessful: true, task}, environment, slack);

@@ -5,19 +5,27 @@ import Logger from './log';
 
 const log = new Logger('completeFlagDeployment');
 
-export default async({key, tags, description}, apiKey) => {
-  const body = JSON.stringify([
+export default async({key, tags, description}, environment, apiKey) => {
+  const updatedTags = without(tags, `${environment}-scheduled`);
+  const operations = [
     {
       op: 'replace',
       path: '/tags',
-      value: without(tags, 'scheduled'),
+      value: updatedTags,
     },
-    {
+  ];
+
+  const remainingScheduledTags = updatedTags.filter(tag => tag.endsWith('-scheduled'));
+
+  if (remainingScheduledTags.length === 0) {
+    operations.push({
       op: 'replace',
       path: '/description',
       value: description,
-    }
-  ]);
+    });
+  }
+
+  const body = JSON.stringify(operations);
 
   const url = `${launchDarklyFlagsEndpoint}/${key}`;
 

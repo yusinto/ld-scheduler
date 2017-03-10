@@ -84,7 +84,7 @@ describe('Scheduler', () => {
         value: true,
       }])
     });
-    td.verify(completeFlagDeployment(outstandingTask, 'someKey'));
+    td.verify(completeFlagDeployment(outstandingTask, 'test', 'someKey'));
     td.verify(messageSlack({isUpdateSuccessful: true, task: outstandingTask}, 'test', '/url/to/slack/webhook'));
   });
 
@@ -140,7 +140,7 @@ describe('Scheduler', () => {
         ],
       }])
     });
-    td.verify(completeFlagDeployment(outstandingTask, 'someKey'));
+    td.verify(completeFlagDeployment(outstandingTask, 'test', 'someKey'));
     td.verify(messageSlack({isUpdateSuccessful: true, task: outstandingTask}, 'test', '/url/to/slack/webhook'));
   });
 

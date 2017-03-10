@@ -6,7 +6,7 @@ const log = new Logger('getScheduledFlags');
 
 // list all scheduled flags in the default project
 export default async(environment, apiKey) => {
-  const url = `${launchDarklyFlagsEndpoint}?env=${environment}&tag=scheduled`;
+  const url = `${launchDarklyFlagsEndpoint}?env=${environment}&tag=${environment}-scheduled`;
   try {
     const response = await fetch(url, {
       method: 'GET',

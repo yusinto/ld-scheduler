@@ -26,7 +26,6 @@ export default async({key, tags, description}, environment, apiKey) => {
   }
 
   const body = JSON.stringify(operations);
-
   const url = `${launchDarklyFlagsEndpoint}/${key}`;
 
   try {

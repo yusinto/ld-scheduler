@@ -8,7 +8,6 @@ import getRequestHeaders from './getRequestHeaders';
 describe('Complete flag deployment', () => {
   const completeFlagDeployment = require('./completeFlagDeployment').default;
 
-
   beforeEach(() => {
     fetch.mockSuccess();
     td.when(getRequestHeaders(td.matchers.anything())).thenReturn('headers');

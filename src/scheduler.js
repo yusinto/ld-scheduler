@@ -57,7 +57,7 @@ export default async({environment, apiKey, slack}) => {
       const targetDeploymentDateTime = moment(outstandingTask.targetDeploymentDateTime, 'YYYY-MM-DD HH:mm Z');
       const isScheduledTimePassed = currentDateTime.isAfter(targetDeploymentDateTime);
 
-      log.info(`Found scheduled flag ${f.key} with targetDeploymentDateTime: ${targetDeploymentDateTime}. isScheduledTimePassed? ${isScheduledTimePassed}`);
+      log.info(`Found scheduled flag ${f.key} with targetDeploymentDateTime: ${targetDeploymentDateTime.format()}. isScheduledTimePassed: ${isScheduledTimePassed}`);
       return isScheduledTimePassed;
     } catch (e) {
       log.error(`${f.key} is scheduled, but its description field is not a valid json object: ${f.description}`);

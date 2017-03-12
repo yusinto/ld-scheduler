@@ -24,10 +24,13 @@ describe('Scheduler', () => {
   const scheduler = require('./scheduler').default;
 
   beforeEach(async() => {
-    td.when(moment()).thenReturn({
+    const momentObject = {
       format: mockMomentFormat,
       isAfter: mockMomentIsAfter
-    });
+    };
+
+    td.when(moment()).thenReturn(momentObject);
+    td.when(moment(td.matchers.anything(), 'YYYY-MM-DD HH:mm Z')).thenReturn(momentObject);
     td.when(mockMomentFormat(td.matchers.anything())).thenReturn('TestDate');
     td.when(getRequestHeaders(td.matchers.anything())).thenReturn('headers');
   });
@@ -84,7 +87,7 @@ describe('Scheduler', () => {
         value: true,
       }])
     });
-    td.verify(completeFlagDeployment(outstandingTask, 'someKey'));
+    td.verify(completeFlagDeployment(outstandingTask, 'test', 'someKey'));
     td.verify(messageSlack({isUpdateSuccessful: true, task: outstandingTask}, 'test', '/url/to/slack/webhook'));
   });
 
@@ -140,7 +143,7 @@ describe('Scheduler', () => {
         ],
       }])
     });
-    td.verify(completeFlagDeployment(outstandingTask, 'someKey'));
+    td.verify(completeFlagDeployment(outstandingTask, 'test', 'someKey'));
     td.verify(messageSlack({isUpdateSuccessful: true, task: outstandingTask}, 'test', '/url/to/slack/webhook'));
   });
 

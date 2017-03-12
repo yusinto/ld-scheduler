@@ -44,7 +44,8 @@ By default, ld-scheduler polls launch darkly every 60 seconds:
     });
     ```
 
-3. Tag your feature flag. In launch darkly's dashboard, under the Settings tab of your feature flag, under Tags, add a tag called "scheduled". 
+3. Tag your feature flag. In launch darkly's dashboard, under the Settings tab of your feature flag, under Tags, add one or more "scheduled" tags, each prefixed with an environment name.
+For example, if you have both a test and production environment, you will need 2 tags: 'test-scheduled' and 'production-scheduled'.
 Still in the Settings tab, under Description, add the following JSON object:
 
     ```javascript
@@ -65,7 +66,7 @@ Still in the Settings tab, under Description, add the following JSON object:
 
     The screenshot below is an example configuration:
   
-    ![ld-scheduler-flag-settings](https://cloud.githubusercontent.com/assets/1593077/23701757/3af4af60-044c-11e7-93e7-749175789ebe.png)
+    ![ld-scheduler-flag-settings](https://cloud.githubusercontent.com/assets/1593077/23781221/ddd4557e-059f-11e7-8e4f-601e6cf91f78.png)
 
 4. Run your project and watch magic happens!
 

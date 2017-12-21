@@ -5,7 +5,7 @@ import Logger from './log';
 
 const log = new Logger('completeFlagDeployment');
 
-export default async({key, tags, description}, environment, apiKey) => {
+export default async({key, tags, description, originalDescription}, environment, apiKey) => {
   const updatedTags = without(tags, `${environment}-scheduled`);
   const operations = [
     {
@@ -18,11 +18,30 @@ export default async({key, tags, description}, environment, apiKey) => {
   const remainingScheduledTags = updatedTags.filter(tag => tag.endsWith('-scheduled'));
 
   if (remainingScheduledTags.length === 0) {
-    operations.push({
-      op: 'replace',
-      path: '/description',
-      value: description,
-    });
+    if (Array.isArray(description)) {
+      operations.push({
+        op: 'replace',
+        path: '/description',
+        value: {
+          ...originalDescription.map((d) => {
+            return {
+              ...d,
+              ...d.targetDeploymentDateTime === description.targetDeploymentDateTime ? { __isDeployed: true } : null,
+            };
+          }),
+          __isDeployed: true,
+        },
+      });
+    } else {
+      operations.push({
+        op: 'replace',
+        path: '/description',
+        value: {
+          ...description,
+          __isDeployed: true,
+        },
+      });
+    }
   }
 
   const body = JSON.stringify(operations);

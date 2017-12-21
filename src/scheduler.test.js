@@ -202,4 +202,47 @@ describe('Scheduler', () => {
     td.verify(completeFlagDeployment(outstandingTask, 'someKey'), {times: 0});
     td.verify(messageSlack({isUpdateSuccessful: false, task: outstandingTask}, 'test', '/url/to/slack/webhook'));
   });
+
+  describe('filterRequiredFilters', () => {
+    const filterRequiredFilters = require('./scheduler').filterRequiredFilters;
+
+    it('should render correct for json object as string', () => {
+      const scheduledFlag = [{
+        key: 'flag1',
+        tags: ['scheduled', 'some other tag'],
+        description: `{
+          "taskType": "fallThroughRollout",
+          "targetDeploymentDateTime": "2017-03-30 02:33", 
+          "description": "Flag1 description",
+          "value": "test"
+        }`
+      }];
+      td.when(mockMomentIsAfter(td.matchers.anything())).thenReturn(true);
+      console.log(filterRequiredFilters(scheduledFlag));
+      expect(filterRequiredFilters(scheduledFlag)).toMatchSnapshot();
+    });
+
+    it.only('should render correct for array as string', () => {
+      const scheduledFlag = [{
+        key: 'flag1',
+        tags: ['scheduled', 'some other tag'],
+        description: `[
+          {
+            "taskType": "fallThroughRollout",
+            "targetDeploymentDateTime": "2017-03-30 02:33", 
+            "description": "Flag1 description",
+            "value": "test1"
+          },
+          {
+            "taskType": "fallThroughRollout1",
+            "targetDeploymentDateTime": "2017-03-31 02:33", 
+            "description": "Flag1 description",
+            "value": "test2"
+          }
+        ]`
+      }];
+      td.when(mockMomentIsAfter(td.matchers.anything())).thenReturn(true);
+      expect(filterRequiredFilters(scheduledFlag)).toMatchSnapshot();
+    });
+  });
 });

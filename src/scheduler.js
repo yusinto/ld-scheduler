@@ -1,5 +1,5 @@
 import moment from 'moment';
-import {taskTypes, launchDarklyFlagsEndpoint} from './constants';
+import { taskTypes, launchDarklyFlagsEndpoint } from './constants';
 import getRequestHeaders from './getRequestHeaders';
 import getScheduledFlags from './getScheduledFlags';
 import completeFlagDeployment from './completeFlagDeployment';
@@ -43,39 +43,74 @@ const log = new Logger('scheduler');
  targetDeploymentDateTime must be in the format of YYYY-MM-DD HH:mm +hh:mm
  description is a textual description of the purpose of the flag for human readability
  */
-export default async({environment, apiKey, slack}) => {
+
+function isValidDateAfter(outstandingTask) {
+  const currentDateTime = moment();
+  const targetDeploymentDateTime = moment(outstandingTask.targetDeploymentDateTime, 'YYYY-MM-DD HH:mm Z');
+  console.log(`with targetDeploymentDateTime: ${targetDeploymentDateTime.format()}.`);
+  return currentDateTime.isAfter(targetDeploymentDateTime);
+}
+
+export function filterRequiredFilters(scheduledFlags) {
+  // get only flags that can be deployed
+  return scheduledFlags
+    .filter(f => {
+      let outstandingTask;
+      try {
+        outstandingTask = JSON.parse(f.description);
+
+        if (Array.isArray(outstandingTask)) {
+          return outstandingTask.filter(task => isValidDateAfter(task));
+        }
+
+        const isScheduledTimePassed = isValidDateAfter(outstandingTask);
+
+        log.info(`Found scheduled flag ${f.key} isScheduledTimePassed: ${isScheduledTimePassed}`);
+        return isScheduledTimePassed;
+      } catch (e) {
+        log.error(`${f.key} is scheduled, but its description field is not a valid json object: ${f.description}`);
+        return false;
+      }
+    })
+    .reduce((accumulator, f) => {
+      const description = JSON.parse(f.description);
+
+      if (Array.isArray(description)) {
+        return [
+          ...accumulator,
+          ...description.map(value => ({
+            key: f.key,
+            tags: f.tags,
+            description: value,
+            originalDescription: description,
+          })),
+        ];
+      }
+
+      return [
+        ...accumulator,
+        {
+          key: f.key,
+          tags: f.tags,
+          ...description,
+        },
+      ];
+    }, []);
+}
+
+export default async ({ environment, apiKey, slack }) => {
   log.info(`ld-scheduler is waking up in ld.environment: ${environment}`);
   const scheduledFlags = await getScheduledFlags(environment, apiKey);
 
-  // get only flags that can be deployed
-  const outstandingTasks = scheduledFlags.filter(f => {
-    let outstandingTask;
-    try {
-      outstandingTask = JSON.parse(f.description);
-
-      const currentDateTime = moment();
-      const targetDeploymentDateTime = moment(outstandingTask.targetDeploymentDateTime, 'YYYY-MM-DD HH:mm Z');
-      const isScheduledTimePassed = currentDateTime.isAfter(targetDeploymentDateTime);
-
-      log.info(`Found scheduled flag ${f.key} with targetDeploymentDateTime: ${targetDeploymentDateTime.format()}. isScheduledTimePassed: ${isScheduledTimePassed}`);
-      return isScheduledTimePassed;
-    } catch (e) {
-      log.error(`${f.key} is scheduled, but its description field is not a valid json object: ${f.description}`);
-      return false;
-    }
-  }).map(f => ({
-    key: f.key,
-    tags: f.tags,
-    ...JSON.parse(f.description)
-  }));
+  const outstandingTasks = filterRequiredFilters(scheduledFlags);
 
   if (outstandingTasks.length === 0) {
     log.info(`Nothing to process, going back to sleep`);
     return;
   }
 
-  outstandingTasks.forEach(async(task) => {
-    const {taskType, key, value} = task;
+  outstandingTasks.forEach(async task => {
+    const { taskType, key, value } = task;
     log.info(`Processing ${JSON.stringify(task)}`);
 
     let path = `/environments/${environment}`;
@@ -92,11 +127,13 @@ export default async({environment, apiKey, slack}) => {
         return;
     }
 
-    const body = JSON.stringify([{
-      op: 'replace',
-      path,
-      value,
-    }]);
+    const body = JSON.stringify([
+      {
+        op: 'replace',
+        path,
+        value,
+      },
+    ]);
 
     const url = `${launchDarklyFlagsEndpoint}/${key}`;
 
@@ -113,14 +150,14 @@ export default async({environment, apiKey, slack}) => {
         completeFlagDeployment(task, environment, apiKey);
 
         log.info(`SUCCESS LD api! Updated ${key} to ${JSON.stringify(value)}.`);
-        messageSlack({isUpdateSuccessful: true, task}, environment, slack);
+        messageSlack({ isUpdateSuccessful: true, task }, environment, slack);
       } else {
         log.info(`LaunchDarkly threw an error. Did not update ${key}. Will retry again later.`);
-        messageSlack({isUpdateSuccessful: false, task}, environment, slack);
+        messageSlack({ isUpdateSuccessful: false, task }, environment, slack);
       }
     } catch (e) {
       log.error(`Network error. Could not reach LaunchDarkly. Did not update ${key}. Will retry again later. ${e}`);
-      messageSlack({isUpdateSuccessful: false, task}, environment, slack);
+      messageSlack({ isUpdateSuccessful: false, task }, environment, slack);
     }
   });
 };

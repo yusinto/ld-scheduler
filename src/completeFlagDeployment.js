@@ -5,7 +5,7 @@ import Logger from './log';
 
 const log = new Logger('completeFlagDeployment');
 
-export default async({key, tags, description, originalDescription}, environment, apiKey) => {
+export default async({key, tags, description, targetDeploymentDateTime, originalDescription}, environment, apiKey) => {
   const updatedTags = without(tags, `${environment}-scheduled`);
   const operations = [
     {
@@ -15,37 +15,41 @@ export default async({key, tags, description, originalDescription}, environment,
     },
   ];
 
-  const remainingScheduledTags = updatedTags.filter(tag => tag.endsWith('-scheduled'));
+  // const remainingScheduledTags = updatedTags.filter(tag => tag.endsWith('-scheduled'));
 
-  if (remainingScheduledTags.length === 0) {
-    if (Array.isArray(description)) {
-      operations.push({
-        op: 'replace',
-        path: '/description',
-        value: {
-          ...originalDescription.map((d) => {
-            return {
-              ...d,
-              ...d.targetDeploymentDateTime === description.targetDeploymentDateTime ? { __isDeployed: true } : null,
-            };
-          }),
-          __isDeployed: true,
-        },
-      });
-    } else {
-      operations.push({
-        op: 'replace',
-        path: '/description',
-        value: {
-          ...description,
-          __isDeployed: true,
-        },
-      });
-    }
+  // if (remainingScheduledTags.length === 0) {
+  if (Array.isArray(originalDescription)) {
+    operations.push({
+      op: 'replace',
+      path: '/description',
+      value: JSON.stringify([
+        ...originalDescription.map((d) => {
+          console.log(d);
+          return {
+            ...d,
+            ...d.targetDeploymentDateTime === targetDeploymentDateTime ? { __isDeployed: true } : null,
+          };
+        }),
+      ]),
+    });
+  } else {
+    operations.push({
+      op: 'replace',
+      path: '/description',
+      value: JSON.stringify({
+        ...description,
+        __isDeployed: true,
+      }),
+    });
   }
+  // }
 
   const body = JSON.stringify(operations);
   const url = `${launchDarklyFlagsEndpoint}/${key}`;
+
+  console.log("wtf");
+  console.log(url);
+  console.log(body);
 
   try {
     const response = await fetch(url, {

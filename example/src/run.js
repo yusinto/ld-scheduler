@@ -1,7 +1,7 @@
-import ldScheduler from 'ld-scheduler';
+import ldScheduler from '../../src';
 
 ldScheduler.runOnce({
   environment: 'test',
-  apiKey: 'sdk-06553353-646e-44c3-b860-f5ba873750b4',
+  apiKey: 'api-d0007f5f-9ba8-4dad-be33-97ab8296f05e',
   slack: 'https://hooks.slack.com/services/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',
 });

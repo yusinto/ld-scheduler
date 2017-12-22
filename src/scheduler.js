@@ -48,20 +48,21 @@ function isValidDateAfter(outstandingTask) {
   const currentDateTime = moment();
   const targetDeploymentDateTime = moment(outstandingTask.targetDeploymentDateTime, 'YYYY-MM-DD HH:mm Z');
   console.log(`with targetDeploymentDateTime: ${targetDeploymentDateTime.format()}.`);
-  return currentDateTime.isAfter(targetDeploymentDateTime);
+  return currentDateTime.isAfter(targetDeploymentDateTime) && !outstandingTask.__isDeployed;
 }
 
 export function filterRequiredFilters(scheduledFlags) {
   // get only flags that can be deployed
+
+  console.log('ALL', scheduledFlags);
+
   return scheduledFlags
     .filter(f => {
       let outstandingTask;
       try {
         outstandingTask = JSON.parse(f.description);
 
-        if (Array.isArray(outstandingTask)) {
-          return outstandingTask.filter(task => isValidDateAfter(task));
-        }
+        if (Array.isArray(outstandingTask)) return true;
 
         const isScheduledTimePassed = isValidDateAfter(outstandingTask);
 
@@ -78,12 +79,16 @@ export function filterRequiredFilters(scheduledFlags) {
       if (Array.isArray(description)) {
         return [
           ...accumulator,
-          ...description.map(value => ({
-            key: f.key,
-            tags: f.tags,
-            description: value,
-            originalDescription: description,
-          })),
+          ...description.map(value => {
+            if (!isValidDateAfter(value)) return null;
+
+            return {
+              key: f.key,
+              tags: f.tags,
+              ...value,
+              originalDescription: description,
+            };
+          }),
         ];
       }
 
@@ -95,14 +100,15 @@ export function filterRequiredFilters(scheduledFlags) {
           ...description,
         },
       ];
-    }, []);
+    }, []).filter(Boolean);
 }
 
 export default async ({ environment, apiKey, slack }) => {
   log.info(`ld-scheduler is waking up in ld.environment: ${environment}`);
   const scheduledFlags = await getScheduledFlags(environment, apiKey);
-
   const outstandingTasks = filterRequiredFilters(scheduledFlags);
+
+  console.log('outstandingTasks ______', outstandingTasks);
 
   if (outstandingTasks.length === 0) {
     log.info(`Nothing to process, going back to sleep`);
@@ -112,6 +118,10 @@ export default async ({ environment, apiKey, slack }) => {
   outstandingTasks.forEach(async task => {
     const { taskType, key, value } = task;
     log.info(`Processing ${JSON.stringify(task)}`);
+
+    console.log('**************');
+    console.log('task', task);
+    console.log('**************');
 
     let path = `/environments/${environment}`;
 
@@ -150,7 +160,7 @@ export default async ({ environment, apiKey, slack }) => {
         completeFlagDeployment(task, environment, apiKey);
 
         log.info(`SUCCESS LD api! Updated ${key} to ${JSON.stringify(value)}.`);
-        messageSlack({ isUpdateSuccessful: true, task }, environment, slack);
+        // messageSlack({ isUpdateSuccessful: true, task }, environment, slack);
       } else {
         log.info(`LaunchDarkly threw an error. Did not update ${key}. Will retry again later.`);
         messageSlack({ isUpdateSuccessful: false, task }, environment, slack);

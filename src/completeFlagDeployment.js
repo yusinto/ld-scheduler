@@ -15,13 +15,14 @@ export default async({key, tags, description, targetDeploymentDateTime, original
     },
   ];
 
-  // const remainingScheduledTags = updatedTags.filter(tag => tag.endsWith('-scheduled'));
+  const commonAttributes = {
+    op: 'replace',
+    path: '/description',
+  };
 
-  // if (remainingScheduledTags.length === 0) {
-  if (Array.isArray(originalDescription)) {
+  Array.isArray(originalDescription) ?
     operations.push({
-      op: 'replace',
-      path: '/description',
+      ...commonAttributes,
       value: JSON.stringify([
         ...originalDescription.map((d) => {
           console.log(d);
@@ -31,25 +32,17 @@ export default async({key, tags, description, targetDeploymentDateTime, original
           };
         }),
       ]),
-    });
-  } else {
+    }) :
     operations.push({
-      op: 'replace',
-      path: '/description',
+      ...commonAttributes,
       value: JSON.stringify({
         ...description,
         __isDeployed: true,
       }),
     });
-  }
-  // }
 
   const body = JSON.stringify(operations);
   const url = `${launchDarklyFlagsEndpoint}/${key}`;
-
-  console.log("wtf");
-  console.log(url);
-  console.log(body);
 
   try {
     const response = await fetch(url, {

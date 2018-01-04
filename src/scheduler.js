@@ -4,6 +4,7 @@ import getRequestHeaders from './getRequestHeaders';
 import getScheduledFlags from './getScheduledFlags';
 import completeFlagDeployment from './completeFlagDeployment';
 import messageSlack from './slack';
+import sendSlackMessage from './sendSlackMessgae';
 import Logger from './log';
 
 const log = new Logger('scheduler');
@@ -51,48 +52,32 @@ function isValidDateAfter(outstandingTask) {
   return currentDateTime.isAfter(targetDeploymentDateTime) && !outstandingTask.__isDeployed;
 }
 
-export function filterRequiredFilters(scheduledFlags) {
+export function filterRequiredFilters(scheduledFlags, slack) {
+  let description = '';
   // get only flags that can be deployed
-
-  console.log('ALL', scheduledFlags);
-
   return scheduledFlags
-    .filter(f => {
-      let outstandingTask;
-      try {
-        outstandingTask = JSON.parse(f.description);
-
-        if (Array.isArray(outstandingTask)) return true;
-
-        const isScheduledTimePassed = isValidDateAfter(outstandingTask);
-
-        log.info(`Found scheduled flag ${f.key} isScheduledTimePassed: ${isScheduledTimePassed}`);
-        return isScheduledTimePassed;
-      } catch (e) {
-        log.error(`${f.key} is scheduled, but its description field is not a valid json object: ${f.description}`);
-        return false;
-      }
-    })
     .reduce((accumulator, f) => {
-      const description = JSON.parse(f.description);
-
-      if (Array.isArray(description)) {
-        return [
-          ...accumulator,
-          ...description.map(value => {
-            if (!isValidDateAfter(value)) return null;
-
-            return {
-              key: f.key,
-              tags: f.tags,
-              ...value,
-              originalDescription: description,
-            };
-          }),
-        ];
+      try {
+        description = JSON.parse(f.description);
+      } catch (e) {
+        const message = `${f.key} is scheduled, but its description field is not a valid json object: ${f.description}`;
+        return sendSlackMessage(message, slack);
       }
 
-      return [
+      return Array.isArray(description) ? [
+        ...accumulator,
+        ...description.map(value => {
+          if (!isValidDateAfter(value)) return null;
+
+          log.info(`Found scheduled flag ${f.key}`);
+          return {
+            key: f.key,
+            tags: f.tags,
+            ...value,
+            originalDescription: description,
+          };
+        }),
+      ] : [
         ...accumulator,
         {
           key: f.key,
@@ -106,9 +91,7 @@ export function filterRequiredFilters(scheduledFlags) {
 export default async ({ environment, apiKey, slack }) => {
   log.info(`ld-scheduler is waking up in ld.environment: ${environment}`);
   const scheduledFlags = await getScheduledFlags(environment, apiKey);
-  const outstandingTasks = filterRequiredFilters(scheduledFlags);
-
-  console.log('outstandingTasks ______', outstandingTasks);
+  const outstandingTasks = filterRequiredFilters(scheduledFlags, slack);
 
   if (outstandingTasks.length === 0) {
     log.info(`Nothing to process, going back to sleep`);
@@ -119,10 +102,6 @@ export default async ({ environment, apiKey, slack }) => {
     const { taskType, key, value } = task;
     log.info(`Processing ${JSON.stringify(task)}`);
 
-    console.log('**************');
-    console.log('task', task);
-    console.log('**************');
-
     let path = `/environments/${environment}`;
 
     switch (taskType) {
@@ -132,9 +111,10 @@ export default async ({ environment, apiKey, slack }) => {
       case taskTypes.fallThroughRollout:
         path += '/fallthrough/rollout/variations';
         break;
-      default:
-        log.error(`ERROR: Unknown task type: ${taskType}`);
-        return;
+      default: {
+        const message = `ERROR: Unknown task type: ${taskType}`;
+        return sendSlackMessage(message, slack);
+      }
     }
 
     const body = JSON.stringify([

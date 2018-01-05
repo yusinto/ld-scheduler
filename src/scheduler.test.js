@@ -222,7 +222,7 @@ describe('Scheduler', () => {
       expect(filterRequiredFilters(scheduledFlag)).toMatchSnapshot();
     });
 
-    it.only('should render correct for array as string', () => {
+    it('should render correct for array as string', () => {
       const scheduledFlag = [{
         key: 'flag1',
         tags: ['scheduled', 'some other tag'],

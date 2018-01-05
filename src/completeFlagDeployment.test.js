@@ -1,5 +1,5 @@
 jest.mock('./constants', () => ({
-  launchDarklyFlagsEndpoint: 'mockBaseUrl/flags'
+  launchDarklyFlagsEndpoint: 'mockBaseUrl/flags',
 }));
 jest.mock('./getRequestHeaders', () => global.td.function('mockGetRequestHeaders'));
 
@@ -17,29 +17,42 @@ describe('Complete flag deployment', () => {
     jest.resetAllMocks();
   });
 
-  it('returns scheduled flags correctly when there are additional remaining scheduled flags', async() => {
+  it('returns scheduled flags correctly when there are additional remaining scheduled flags', async () => {
     const expectedJsonPatchBody = JSON.stringify([
       {
         op: 'replace',
         path: '/tags',
         value: ['some-other-env-scheduled'],
-      }
+      },
+      {
+        op: 'replace',
+        path: '/description',
+        value: JSON.stringify({
+          test: 'test',
+          __isDeployed: true,
+        }),
+      },
     ]);
 
-    await completeFlagDeployment({
-      key: 'test-flag',
-      tags: ['some-other-env-scheduled', 'test-scheduled'],
-      description: 'this is a test flag'
-    }, 'test');
+    await completeFlagDeployment(
+      {
+        key: 'test-flag',
+        tags: ['some-other-env-scheduled', 'test-scheduled'],
+        description: {
+          test: 'test',
+        },
+      },
+      'test',
+    );
 
     expect(fetch).toHaveBeenCalledWith('mockBaseUrl/flags/test-flag', {
       method: 'PATCH',
       headers: 'headers',
-      body: expectedJsonPatchBody
+      body: expectedJsonPatchBody,
     });
   });
 
-  it('returns scheduled flags correctly when there are no remaining scheduled flags', async() => {
+  it('returns scheduled flags correctly when there are no remaining scheduled flags', async () => {
     const expectedJsonPatchBody = JSON.stringify([
       {
         op: 'replace',
@@ -49,20 +62,28 @@ describe('Complete flag deployment', () => {
       {
         op: 'replace',
         path: '/description',
-        value: 'this is a test flag',
-      }
+        value: JSON.stringify({
+          test: 'test',
+          __isDeployed: true,
+        }),
+      },
     ]);
 
-    await completeFlagDeployment({
-      key: 'test-flag',
-      tags: ['some-other-tag-that-doesnt-end-with-scheduled-and-ends-with-something-else', 'test-scheduled'],
-      description: 'this is a test flag'
-    }, 'test');
+    await completeFlagDeployment(
+      {
+        key: 'test-flag',
+        tags: ['some-other-tag-that-doesnt-end-with-scheduled-and-ends-with-something-else', 'test-scheduled'],
+        description: {
+          test: 'test',
+        },
+      },
+      'test',
+    );
 
     expect(fetch).toHaveBeenCalledWith('mockBaseUrl/flags/test-flag', {
       method: 'PATCH',
       headers: 'headers',
-      body: expectedJsonPatchBody
+      body: expectedJsonPatchBody,
     });
   });
 });

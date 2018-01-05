@@ -1,11 +1,15 @@
-import {launchDarklyFlagsEndpoint} from './constants';
+import { launchDarklyFlagsEndpoint } from './constants';
 import getRequestHeaders from './getRequestHeaders';
 import without from 'lodash/without';
 import Logger from './log';
 
 const log = new Logger('completeFlagDeployment');
 
-export default async({key, tags, description, targetDeploymentDateTime, originalDescription}, environment, apiKey) => {
+export default async (
+  { key, tags, description, targetDeploymentDateTime, originalDescription },
+  environment,
+  apiKey,
+) => {
   const updatedTags = without(tags, `${environment}-scheduled`);
   const operations = [
     {
@@ -20,20 +24,17 @@ export default async({key, tags, description, targetDeploymentDateTime, original
     path: '/description',
   };
 
-  Array.isArray(originalDescription) ?
-    operations.push({
+  Array.isArray(originalDescription)
+    ? operations.push({
       ...commonAttributes,
       value: JSON.stringify([
-        ...originalDescription.map((d) => {
-          console.log(d);
-          return {
-            ...d,
-            ...d.targetDeploymentDateTime === targetDeploymentDateTime ? { __isDeployed: true } : null,
-          };
-        }),
+        ...originalDescription.map(d => ({
+          ...d,
+          ...(d.targetDeploymentDateTime === targetDeploymentDateTime ? { __isDeployed: true } : null),
+        })),
       ]),
-    }) :
-    operations.push({
+    })
+    : operations.push({
       ...commonAttributes,
       value: JSON.stringify({
         ...description,

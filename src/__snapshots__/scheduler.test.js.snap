@@ -1,0 +1,72 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Scheduler filterRequiredFilters should render correct for array as string 1`] = `
+Array [
+  Object {
+    "description": "Flag1 description",
+    "key": "flag1",
+    "originalDescription": Array [
+      Object {
+        "description": "Flag1 description",
+        "targetDeploymentDateTime": "2017-03-30 02:33",
+        "taskType": "fallThroughRollout",
+        "value": "test1",
+      },
+      Object {
+        "description": "Flag1 description",
+        "targetDeploymentDateTime": "2017-03-31 02:33",
+        "taskType": "fallThroughRollout1",
+        "value": "test2",
+      },
+    ],
+    "tags": Array [
+      "scheduled",
+      "some other tag",
+    ],
+    "targetDeploymentDateTime": "2017-03-30 02:33",
+    "taskType": "fallThroughRollout",
+    "value": "test1",
+  },
+  Object {
+    "description": "Flag1 description",
+    "key": "flag1",
+    "originalDescription": Array [
+      Object {
+        "description": "Flag1 description",
+        "targetDeploymentDateTime": "2017-03-30 02:33",
+        "taskType": "fallThroughRollout",
+        "value": "test1",
+      },
+      Object {
+        "description": "Flag1 description",
+        "targetDeploymentDateTime": "2017-03-31 02:33",
+        "taskType": "fallThroughRollout1",
+        "value": "test2",
+      },
+    ],
+    "tags": Array [
+      "scheduled",
+      "some other tag",
+    ],
+    "targetDeploymentDateTime": "2017-03-31 02:33",
+    "taskType": "fallThroughRollout1",
+    "value": "test2",
+  },
+]
+`;
+
+exports[`Scheduler filterRequiredFilters should render correct for json object as string 1`] = `
+Array [
+  Object {
+    "description": "Flag1 description",
+    "key": "flag1",
+    "tags": Array [
+      "scheduled",
+      "some other tag",
+    ],
+    "targetDeploymentDateTime": "2017-03-30 02:33",
+    "taskType": "fallThroughRollout",
+    "value": "test",
+  },
+]
+`;

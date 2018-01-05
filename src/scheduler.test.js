@@ -203,8 +203,8 @@ describe('Scheduler', () => {
     td.verify(messageSlack({isUpdateSuccessful: false, task: outstandingTask}, 'test', '/url/to/slack/webhook'));
   });
 
-  describe('filterRequiredFilters', () => {
-    const filterRequiredFilters = require('./scheduler').filterRequiredFilters;
+  describe('filterFlags', () => {
+    const filterRequiredFilters = require('./scheduler').filterFlags;
 
     it('should render correct for json object as string', () => {
       const scheduledFlag = [{

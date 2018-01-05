@@ -1,4 +1,3 @@
-import moment from 'moment';
 import { taskTypes, launchDarklyFlagsEndpoint } from './constants';
 import getRequestHeaders from './getRequestHeaders';
 import getScheduledFlags from './getScheduledFlags';
@@ -6,6 +5,7 @@ import completeFlagDeployment from './completeFlagDeployment';
 import messageSlack from './slack';
 import sendSlackMessage from './sendSlackMessgae';
 import Logger from './log';
+import filterFlags from './filterFlags';
 
 const log = new Logger('scheduler');
 
@@ -45,53 +45,10 @@ const log = new Logger('scheduler');
  description is a textual description of the purpose of the flag for human readability
  */
 
-function isValidDateAfter(outstandingTask) {
-  const currentDateTime = moment();
-  const targetDeploymentDateTime = moment(outstandingTask.targetDeploymentDateTime, 'YYYY-MM-DD HH:mm Z');
-  console.log(`with targetDeploymentDateTime: ${targetDeploymentDateTime.format()}.`);
-  return currentDateTime.isAfter(targetDeploymentDateTime) && !outstandingTask.__isDeployed;
-}
-
-export function filterRequiredFilters(scheduledFlags, slack) {
-  let description = '';
-  // get only flags that can be deployed
-  return scheduledFlags
-    .reduce((accumulator, f) => {
-      try {
-        description = JSON.parse(f.description);
-      } catch (e) {
-        const message = `${f.key} is scheduled, but its description field is not a valid json object: ${f.description}`;
-        return sendSlackMessage(message, slack);
-      }
-
-      return Array.isArray(description) ? [
-        ...accumulator,
-        ...description.map(value => {
-          if (!isValidDateAfter(value)) return null;
-
-          log.info(`Found scheduled flag ${f.key}`);
-          return {
-            key: f.key,
-            tags: f.tags,
-            ...value,
-            originalDescription: description,
-          };
-        }),
-      ] : [
-        ...accumulator,
-        {
-          key: f.key,
-          tags: f.tags,
-          ...description,
-        },
-      ];
-    }, []).filter(Boolean);
-}
-
 export default async ({ environment, apiKey, slack }) => {
   log.info(`ld-scheduler is waking up in ld.environment: ${environment}`);
   const scheduledFlags = await getScheduledFlags(environment, apiKey);
-  const outstandingTasks = filterRequiredFilters(scheduledFlags, slack);
+  const outstandingTasks = filterFlags(scheduledFlags, slack);
 
   if (outstandingTasks.length === 0) {
     log.info(`Nothing to process, going back to sleep`);

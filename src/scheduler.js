@@ -140,7 +140,7 @@ export default async ({ environment, apiKey, slack }) => {
         completeFlagDeployment(task, environment, apiKey);
 
         log.info(`SUCCESS LD api! Updated ${key} to ${JSON.stringify(value)}.`);
-        // messageSlack({ isUpdateSuccessful: true, task }, environment, slack);
+        messageSlack({ isUpdateSuccessful: true, task }, environment, slack);
       } else {
         log.info(`LaunchDarkly threw an error. Did not update ${key}. Will retry again later.`);
         messageSlack({ isUpdateSuccessful: false, task }, environment, slack);

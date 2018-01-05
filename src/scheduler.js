@@ -4,8 +4,8 @@ import getScheduledFlags from './getScheduledFlags';
 import completeFlagDeployment from './completeFlagDeployment';
 import messageSlack from './slack';
 import sendSlackMessage from './sendSlackMessgae';
-import Logger from './log';
 import filterFlags from './filterFlags';
+import Logger from './log';
 
 const log = new Logger('scheduler');
 

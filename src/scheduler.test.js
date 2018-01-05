@@ -16,6 +16,8 @@ import getRequestHeaders from './getRequestHeaders';
 import getScheduledFlags from './getScheduledFlags';
 import completeFlagDeployment from './completeFlagDeployment';
 import messageSlack from './slack';
+import filterFlags from './filterFlags';
+
 
 const mockMomentFormat = td.function('mockMomentFormat');
 const mockMomentIsAfter = td.function('mockMomentIsAfter');
@@ -204,8 +206,6 @@ describe('Scheduler', () => {
   });
 
   describe('filterFlags', () => {
-    const filterRequiredFilters = require('./scheduler').filterFlags;
-
     it('should render correct for json object as string', () => {
       const scheduledFlag = [{
         key: 'flag1',
@@ -218,8 +218,8 @@ describe('Scheduler', () => {
         }`
       }];
       td.when(mockMomentIsAfter(td.matchers.anything())).thenReturn(true);
-      console.log(filterRequiredFilters(scheduledFlag));
-      expect(filterRequiredFilters(scheduledFlag)).toMatchSnapshot();
+      console.log(filterFlags(scheduledFlag));
+      expect(filterFlags(scheduledFlag)).toMatchSnapshot();
     });
 
     it('should render correct for array as string', () => {
@@ -242,7 +242,7 @@ describe('Scheduler', () => {
         ]`
       }];
       td.when(mockMomentIsAfter(td.matchers.anything())).thenReturn(true);
-      expect(filterRequiredFilters(scheduledFlag)).toMatchSnapshot();
+      expect(filterFlags(scheduledFlag)).toMatchSnapshot();
     });
   });
 });

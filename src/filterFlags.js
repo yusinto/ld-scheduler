@@ -1,5 +1,8 @@
 import isValidDateAfter from './isValidDateAfter';
 import sendSlackMessage from './sendSlackMessgae';
+import Logger from './log';
+
+const log = new Logger('filterFlags');
 
 export default function filterFlags(scheduledFlags, slack) {
   let description = '';

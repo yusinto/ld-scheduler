@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`Scheduler filterRequiredFilters should render correct for array as string 1`] = `
+exports[`Scheduler filterFlags should render correct for array as string 1`] = `
 Array [
   Object {
     "description": "Flag1 description",
@@ -55,7 +55,7 @@ Array [
 ]
 `;
 
-exports[`Scheduler filterRequiredFilters should render correct for json object as string 1`] = `
+exports[`Scheduler filterFlags should render correct for json object as string 1`] = `
 Array [
   Object {
     "description": "Flag1 description",

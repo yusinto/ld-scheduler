@@ -23,7 +23,7 @@ var log = new _log2.default('getScheduledFlags');
 // list all scheduled flags in the default project
 
 exports.default = function () {
-  var _ref = _asyncToGenerator(regeneratorRuntime.mark(function _callee(environment, apiKey) {
+  var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(environment, apiKey) {
     var url, response, data;
     return regeneratorRuntime.wrap(function _callee$(_context) {
       while (1) {

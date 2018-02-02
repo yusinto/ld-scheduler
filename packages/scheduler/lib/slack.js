@@ -21,7 +21,7 @@ function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, a
 var log = new _log2.default('slack');
 
 exports.default = function () {
-  var _ref = _asyncToGenerator(regeneratorRuntime.mark(function _callee(_ref2, environment, slack) {
+  var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(_ref2, environment, slack) {
     var isUpdateSuccessful = _ref2.isUpdateSuccessful,
         _ref2$task = _ref2.task,
         taskType = _ref2$task.taskType,

@@ -49,12 +49,16 @@ export default async({environment, apiKey, slack}) => {
 
   // get only flags that can be deployed
   const outstandingTasks = scheduledFlags.filter(f => {
-    let outstandingTask;
+    let outstandingTaskList;
     try {
-      outstandingTask = JSON.parse(f.description);
+      outstandingTaskList = JSON.parse(f.description);
+
+      if(!Array.isArray(outstandingTaskList)) {
+        outstandingTaskList = [outstandingTaskList];
+      }
 
       const currentDateTime = moment();
-      const targetDeploymentDateTime = moment(outstandingTask.targetDeploymentDateTime, 'YYYY-MM-DD HH:mm Z');
+      const targetDeploymentDateTime = moment(outstandingTaskList.targetDeploymentDateTime, 'YYYY-MM-DD HH:mm Z');
       const isScheduledTimePassed = currentDateTime.isAfter(targetDeploymentDateTime);
 
       log.info(`Found scheduled flag ${f.key} with targetDeploymentDateTime: ${targetDeploymentDateTime.format()}. isScheduledTimePassed: ${isScheduledTimePassed}`);

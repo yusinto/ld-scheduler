@@ -75,7 +75,7 @@ var log = new _log2.default('scheduler');
  */
 
 exports.default = function () {
-  var _ref = _asyncToGenerator(regeneratorRuntime.mark(function _callee2(_ref2) {
+  var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(_ref2) {
     var environment = _ref2.environment,
         apiKey = _ref2.apiKey,
         slack = _ref2.slack;
@@ -94,12 +94,16 @@ exports.default = function () {
 
             // get only flags that can be deployed
             outstandingTasks = scheduledFlags.filter(function (f) {
-              var outstandingTask = void 0;
+              var outstandingTaskList = void 0;
               try {
-                outstandingTask = JSON.parse(f.description);
+                outstandingTaskList = JSON.parse(f.description);
+
+                if (!Array.isArray(outstandingTaskList)) {
+                  outstandingTaskList = [outstandingTaskList];
+                }
 
                 var currentDateTime = (0, _moment2.default)();
-                var targetDeploymentDateTime = (0, _moment2.default)(outstandingTask.targetDeploymentDateTime, 'YYYY-MM-DD HH:mm Z');
+                var targetDeploymentDateTime = (0, _moment2.default)(outstandingTaskList.targetDeploymentDateTime, 'YYYY-MM-DD HH:mm Z');
                 var isScheduledTimePassed = currentDateTime.isAfter(targetDeploymentDateTime);
 
                 log.info('Found scheduled flag ' + f.key + ' with targetDeploymentDateTime: ' + targetDeploymentDateTime.format() + '. isScheduledTimePassed: ' + isScheduledTimePassed);
@@ -126,7 +130,7 @@ exports.default = function () {
           case 8:
 
             outstandingTasks.forEach(function () {
-              var _ref3 = _asyncToGenerator(regeneratorRuntime.mark(function _callee(task) {
+              var _ref3 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(task) {
                 var taskType, key, value, path, body, url, response;
                 return regeneratorRuntime.wrap(function _callee$(_context) {
                   while (1) {

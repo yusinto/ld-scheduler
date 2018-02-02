@@ -25,7 +25,7 @@ function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, a
 var log = new _log2.default('completeFlagDeployment');
 
 exports.default = function () {
-  var _ref = _asyncToGenerator(regeneratorRuntime.mark(function _callee(_ref2, environment, apiKey) {
+  var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(_ref2, environment, apiKey) {
     var key = _ref2.key,
         tags = _ref2.tags,
         description = _ref2.description;

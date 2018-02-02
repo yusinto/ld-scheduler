@@ -4,11 +4,9 @@
   "description": "Schedule launch darkly flags on or off",
   "main": "lib/index.js",
   "scripts": {
-    "start": "node ./src/index.js",
     "test": "jest --watchAll",
     "lint": "eslint --cache --format 'node_modules/eslint-friendly-formatter' ./src",
-    "build": "rimraf lib/* && babel src -d lib --ignore *.test.js",
-    "ui": "babel-node ./src/ui/server",
+    "ui": "babel-node ./src/server",
     "build-ui": "webpack --mode development"
   },
   "jest": {
@@ -42,9 +40,11 @@
     "@babel/node": "^7.0.0-beta.39",
     "@babel/preset-env": "^7.0.0-beta.39",
     "@babel/preset-react": "^7.0.0-beta.39",
+    "css-loader": "^0.28.9",
     "express": "^4.16.2",
     "react": "^16.2.0",
-    "react-dom": "^16.2.0"
+    "react-dom": "^16.2.0",
+    "style-loader": "^0.20.1"
   },
   "devDependencies": {
     "babel-loader": "^8.0.0-beta.0",

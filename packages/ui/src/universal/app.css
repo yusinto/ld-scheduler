@@ -1,0 +1,32 @@
+body {
+  margin: 0;
+  height: 100%;
+}
+
+.root {
+  display: flex;
+  height: 100%;
+}
+
+.leftNav {
+  position: fixed;
+  width: 220px;
+  height: 100%;
+  background-color: rgb(65, 117, 5);
+}
+
+.content {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  margin-left: 220px;
+}
+
+.contentHeader {
+  padding-left: 40px;
+}
+
+.contentBody {
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  color: rgb(17, 17, 17);
+}

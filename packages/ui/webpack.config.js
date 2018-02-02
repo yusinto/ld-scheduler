@@ -1,23 +1,39 @@
 const path = require('path');
 const webpack = require('webpack');
-const uiFolder = path.resolve(__dirname, 'src/ui');
-const clientFolder = path.resolve(uiFolder, 'client');
+const srcFolder = path.resolve(__dirname, 'src');
+const clientFolder = path.resolve(srcFolder, 'client');
 
 module.exports = {
   mode: 'development',
   entry: ['webpack-hot-middleware/client', path.resolve(clientFolder, 'index')],
   output: {
     filename: 'main.js',
-    path: path.resolve(uiFolder, 'dist'),
+    path: path.resolve(srcFolder, 'dist'),
     publicPath: '/dist/',
   },
   module: {
     rules: [
       {
         test: /\.js$/,
-        include: uiFolder,
+        include: srcFolder,
         exclude: /node_modules/,
         loader: 'babel-loader',
+      },
+      {
+        test: /\.css$/,
+        include: srcFolder,
+        exclude: /node_modules/,
+        use: [
+          {loader: 'style-loader'},
+          {
+            loader: 'css-loader',
+            options: {
+              importLoaders: 1,
+              modules: true,
+              localIdentName: '[folder]--[name]--[local]--[hash:base64:2]',
+            }
+          },
+        ]
       }
     ],
   },
